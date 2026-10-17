@@ -1,0 +1,14 @@
+{
+  "name": "learn-with-math-wizard",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Math Wizard Quest: a first make-ten learning mission",
+  "scripts": {
+    "dev": "node scripts/serve.mjs",
+    "check": "node scripts/check.mjs",
+    "test": "node --test",
+    "build": "node scripts/build.mjs"
+  },
+  "engines": { "node": ">=22" }
+}
