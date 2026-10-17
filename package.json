@@ -1,9 +1,9 @@
 {
   "name": "learn-with-math-wizard",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
-  "description": "Math Wizard Quest: a first make-ten learning mission",
+  "description": "Math Wizard Quest: randomized grade 1–4 math adventures",
   "scripts": {
     "dev": "node scripts/serve.mjs",
     "check": "node scripts/check.mjs",

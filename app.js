@@ -1,7 +1,8 @@
-import { MISSION, CHALLENGE_DECK, CONTACTS } from './lib/content.js';
+import { MISSION, CONTACTS } from './lib/content.js';
 import { parseNumber, newAttempt, recordAttempt, createLearningState, makeTenMove, rankScores } from './lib/engine.js';
 import { createStore } from './lib/storage.js';
 import { createAudio } from './lib/audio.js';
+import { GRADE_PROFILES, QUESTION_PROFILE_VERSION, createQuestionRound } from './lib/questions.js';
 
 const $ = id => document.getElementById(id);
 const store = createStore();
@@ -9,13 +10,14 @@ const audio = createAudio();
 const initial = store.readProgress();
 let progress = initial.data;
 let view = 'home';
+let selectedGrade = store.readGrade().data;
 let challenge = null;
 let timer = null;
 let cleanupDrawing = null;
 const steps = ['story', 'model', 'equation', 'answer', 'trace', 'write', 'explain', 'transfer', 'summary'];
 const fields = { story: 'story', equation: 'equation', answer: 'base', explain: 'explanation', transfer: 'transfer' };
 const expected = { story: MISSION.storyExpected, equation: MISSION.equationExpected, base: MISSION.baseExpected, explanation: MISSION.explanationExpected, transfer: MISSION.transfer.expected };
-const titles = { story: ['เรื่องนี้ถามอะไรนะ?', 'ฟังหรืออ่านข้อความ แล้วเลือกสิ่งที่เราต้องหา'], model: ['เติมให้ครบสิบกัน', 'แตะกองแสงหรือใช้ปุ่มย้ายทีละดวงให้เต็มกรอบแรก'], equation: ['ภาพนี้เขียนเป็นโจทย์แบบไหน?', 'เลือกสมการที่ตรงกับเรื่องในสวน'], answer: ['ตอนนี้มีแสงทั้งหมดเท่าไร?', 'พิมพ์คำตอบของเรา แล้วลองตรวจด้วยภาพที่จัดไว้'], trace: ['บันทึกเลขลงสมุดเวท', 'เริ่มจากเขียนตามรอย 14 ไม่ต้องรีบและไม่ต้องเป๊ะ'], write: ['คราวนี้ลองเขียนเอง', 'เขียนเลข 14 แล้วบอกว่าเราตั้งใจเขียนจำนวนใด'], explain: ['แสงย้ายที่…จำนวนเปลี่ยนไหม?', 'เลือกคำอธิบายที่ตรงกับสิ่งที่เราทำ'], transfer: ['ลองเรื่องใหม่ด้วยตัวเอง', 'ยังไม่เปิดภาพช่วย ลองใช้วิธีที่เราถนัดก่อน'], summary: ['สวนกลับมาสว่างแล้ว!', 'เราได้ลองคิด จัดภาพ และอธิบายวิธีของตัวเอง'] };
+const titles = { story: ['เรื่องนี้ถามอะไรนะ?', 'ฟังหรืออ่านข้อความ แล้วเลือกสิ่งที่เราต้องหา'], model: ['เติมให้ครบสิบกัน', 'แตะกองแสงหรือใช้ปุ่มย้ายทีละดวงให้เต็มกรอบแรก'], equation: ['ภาพนี้เขียนเป็นโจทย์แบบไหน?', 'เลือกสมการที่ตรงกับเรื่องในสวน'], answer: ['ตอนนี้มีแสงทั้งหมดเท่าไร?', 'พิมพ์คำตอบของเรา แล้วลองตรวจด้วยภาพที่จัดไว้'], trace: ['บันทึกเลขลงสมุดเวท', 'เริ่มจากเขียนตามรอย 14 ไม่ต้องรีบและไม่ต้องเป๊ะ'], write: ['คราวนี้ลองเขียนเอง', 'เขียนเลข 14 แล้วบอกว่าเราตั้งใจเขียนจำนวนใด'], explain: ['ย้ายแล้ว แสงทั้งหมดเปลี่ยนไหม?', 'ดูภาพก่อนย้ายและหลังย้าย แล้วเลือกคำตอบ'], transfer: ['ลองเรื่องใหม่ด้วยตัวเอง', 'ยังไม่เปิดภาพช่วย ลองใช้วิธีที่เราถนัดก่อน'], summary: ['สวนกลับมาสว่างแล้ว!', 'เราได้ลองคิด จัดภาพ และอธิบายวิธีของตัวเอง'] };
 
 function node(tag, className = '', text = '') { const element = document.createElement(tag); if (className) element.className = className; if (text) element.textContent = text; return element; }
 function button(text, className, action) { const element = node('button', className, text); element.type = 'button'; if (action) element.addEventListener('click', action); return element; }
@@ -33,8 +35,20 @@ function audioControls(text) {
 }
 function renderHome() {
   $('resume-mission').hidden = !progress;
-  $('resume-mission').textContent = progress?.completed ? 'ดูผลภารกิจล่าสุด' : 'เรียนต่อ';
+  $('resume-mission').textContent = progress?.completed ? 'ดูผลภารกิจทำสิบ ป.1' : 'เรียนต่อภารกิจทำสิบ ป.1';
   $('new-mission-confirm').hidden = true;
+  const profile = GRADE_PROFILES.find(item => item.grade === selectedGrade);
+  document.querySelectorAll('[data-grade]').forEach(item => item.setAttribute('aria-pressed', String(Number(item.dataset.grade) === selectedGrade)));
+  $('grade-profile-description').textContent = 'ป.' + selectedGrade + ' · ' + profile.description;
+  $('home-grade-tag').textContent = 'พร้อมฝึก ป.' + selectedGrade;
+  $('home-scene-title').textContent = 'ประตูเวทคณิต ป.' + selectedGrade;
+  $('home-challenge-label').textContent = 'ท้าทาย 5 ข้อ · ป.' + selectedGrade;
+  $('home-symbol').textContent = selectedGrade === 1 ? '+ −' : selectedGrade === 2 ? '× ÷' : '½ ¼';
+}
+function selectGrade(grade) {
+  const number = Number(grade); if (!GRADE_PROFILES.some(item => item.grade === number)) return false;
+  if (progress && view === 'learning') saveProgress();
+  selectedGrade = number; notice(store.writeGrade(number)); cancelChallenge(); showView('home'); renderHome(); return true;
 }
 function goHome() { if (progress && view === 'learning') saveProgress(); cancelChallenge(); showView('home'); renderHome(); focusHeading('home-heading'); }
 function startNewMission() { cancelChallenge(); progress = createLearningState(); saveProgress(); showView('learning'); renderLearning(); }
@@ -88,13 +102,31 @@ function renderLearning() {
   else if (progress.step === 'equation') renderChoice(panel, 'equation', MISSION.equationChoices, 'มีแสงเดิม 8 ดวง และนำมาเพิ่มอีก 6 ดวง', 'สมการไหนเล่าเรื่องนี้?');
   else if (progress.step === 'answer') renderNumeric(panel, 'base', MISSION.question, 'ดวง');
   else if (progress.step === 'trace' || progress.step === 'write') renderWriting(panel);
-  else if (progress.step === 'explain') renderChoice(panel, 'explanation', MISSION.explanationChoices, 'เราแบ่งแสง 6 ดวงเป็น 2 กับ 4 แล้วย้าย 2 ไปเติมกรอบแรก', 'ทำไมแสงทั้งหมดจึงยังเท่าเดิม?');
+  else if (progress.step === 'explain') renderExplanation(panel);
   else if (progress.step === 'transfer') { panel.append(node('p', 'story-text', MISSION.transfer.story)); renderNumeric(panel, 'transfer', MISSION.transfer.question, 'ลูก'); }
   else renderSummary(panel);
   focusHeading('step-title');
 }
+function renderExplanation(panel) {
+  const comparison = node('div', 'explanation-comparison'); comparison.id = 'explanation-comparison';
+  [['before', 'ก่อนย้าย', [8, 6]], ['after', 'หลังย้าย', [10, 4]]].forEach(([key, label, counts]) => {
+    const card = node('figure', 'comparison-card'); card.id = 'comparison-' + key;
+    card.setAttribute('role', 'img'); card.setAttribute('aria-label', label + ': กองแรก ' + counts[0] + ' ดวง กองที่สอง ' + counts[1] + ' ดวง รวม 14 ดวง');
+    card.append(node('figcaption', 'comparison-label', label));
+    const groups = node('div', 'comparison-groups');
+    counts.forEach((count, groupIndex) => {
+      const group = node('div', 'comparison-group'); const grid = node('div', 'comparison-frame'); grid.setAttribute('aria-hidden', 'true');
+      for (let i = 0; i < 10; i++) { const moved = key === 'before' ? groupIndex === 1 && i < 2 : groupIndex === 0 && i >= 8; const light = node('span', 'light-cell' + (i < count ? ' filled' : '') + (moved && i < count ? ' moved-light' : '')); grid.append(light); }
+      group.append(node('strong', 'comparison-count', count + ' ดวง'), grid); groups.append(group);
+    });
+    const total = node('p', 'comparison-total', 'รวม 14 ดวง'); total.id = key + '-total'; card.append(groups, total); comparison.append(card);
+  });
+  panel.append(comparison, node('p', 'comparison-note', 'แสงขอบสีชมพู 2 ดวงคือแสงที่ย้ายไปอีกกอง'));
+  renderChoice(panel, 'explanation', MISSION.explanationChoices, '', 'เราแค่ย้ายแสง 2 ดวงไปอีกกอง แสงรวมทั้งสองกองเป็นอย่างไร?');
+}
 function renderChoice(panel, field, choices, story, question) {
-  panel.append(node('p', 'story-text', story), node('p', 'question', question), audioControls(story + ' ' + question));
+  if (story) panel.append(node('p', 'story-text', story));
+  panel.append(node('p', 'question', question), audioControls((story ? story + ' ' : '') + question));
   const list = node('div', 'choices'); list.setAttribute('role', 'group'); list.setAttribute('aria-label', question);
   let selected = progress.answers[field].answer; const status = feedback(); const submit = button('ตรวจคำตอบ', 'button primary', submitChoice); const next = button('ไปต่อ →', 'button primary', advanceLearning);
   const choiceButtons = choices.map((choice, index) => { const item = button('', 'choice-button', () => { if (progress.answers[field].correct) return; selected = choice.id; update(); }); item.append(node('span', 'choice-number', String(index + 1)), node('span', '', choice.label)); item.dataset.choice = String(choice.id); list.append(item); return item; });
@@ -103,7 +135,7 @@ function renderChoice(panel, field, choices, story, question) {
     if (selected === null) { status.textContent = 'เลือกหนึ่งคำตอบก่อนนะ'; return; }
     const result = submitLearningAnswer(field, selected); if (!result.valid) return;
     status.className = 'feedback ' + (result.correct ? 'success' : 'error');
-    status.textContent = result.correct ? 'ใช่เลย! ไปลองขั้นต่อไปกัน' : field === 'story' ? 'สิ่งที่เพิ่มมาคือข้อมูลที่รู้แล้ว ลองดูว่าเรื่องถามจำนวนอะไร' : field === 'equation' ? 'เรื่องนี้นำแสงมาเพิ่ม ลองเลือกสมการที่แสดงการรวม' : 'แสงแค่ย้ายที่ ไม่ได้เพิ่มหรือหายไป ลองดูคำอธิบายอีกครั้ง';
+    status.textContent = result.correct ? (field === 'explanation' ? 'ใช่เลย! แสงทั้งหมดเท่าเดิม เราแค่ย้าย 2 ดวงไปอีกกอง' : 'ใช่เลย! ไปลองขั้นต่อไปกัน') : field === 'story' ? 'สิ่งที่เพิ่มมาคือข้อมูลที่รู้แล้ว ลองดูว่าเรื่องถามจำนวนอะไร' : field === 'equation' ? 'เรื่องนี้นำแสงมาเพิ่ม ลองเลือกสมการที่แสดงการรวม' : 'ลองนับทั้งสองกอง: ก่อนย้าย 14 ดวง หลังย้าย 14 ดวง มีแสงเพิ่มหรือหายไปไหม?';
     update(); if (result.correct) next.focus();
   }
   if (progress.answers[field].correct) status.textContent = 'บันทึกคำตอบช่วงนี้แล้ว ไปต่อได้เลย';
@@ -121,14 +153,14 @@ function renderModel(panel) {
   function change(delta) { moveLight(delta); update(); }
   panel.append(controls, message, audioControls('ย้ายแสงจากกองที่เพิ่มไปเติมกรอบแรกให้ครบสิบ แสงที่ย้ายไม่ได้หายไป'), next); update();
 }
-function keypad(input) {
+function keypad(input, { fractions = false } = {}) {
   const pad = node('div', 'keypad'); pad.setAttribute('role', 'group'); pad.setAttribute('aria-label', 'แป้นตัวเลข');
-  ['1','2','3','4','5','6','7','8','9','0','ลบ','ล้าง'].forEach(value => pad.append(button(value, '', () => { if (input.disabled) return; input.value = value === 'ลบ' ? input.value.slice(0, -1) : value === 'ล้าง' ? '' : (input.value + value).slice(0, 8); input.removeAttribute('aria-invalid'); input.focus(); }))); return pad;
+  ['1','2','3','4','5','6','7','8','9', ...(fractions ? ['/', '0', '.'] : ['0']), 'ลบ','ล้าง'].forEach(value => pad.append(button(value, '', () => { if (input.disabled) return; input.value = value === 'ลบ' ? input.value.slice(0, -1) : value === 'ล้าง' ? '' : (input.value + value).slice(0, input.maxLength || 8); input.removeAttribute('aria-invalid'); input.focus(); }))); return pad;
 }
-function numberForm(label, unit, identity) {
-  const form = node('form', 'answer-form'); form.noValidate = true; const input = node('input', 'numeric-input'); input.id = identity; input.type = 'text'; input.inputMode = 'numeric'; input.autocomplete = 'off'; input.maxLength = 8; input.setAttribute('aria-label', label);
+function numberForm(label, unit, identity, { fractions = false } = {}) {
+  const form = node('form', 'answer-form'); form.noValidate = true; const input = node('input', 'numeric-input'); input.id = identity; input.type = 'text'; input.inputMode = fractions ? 'text' : 'numeric'; input.autocomplete = 'off'; input.maxLength = fractions ? 24 : 8; input.setAttribute('aria-label', label);
   const caption = node('label', '', label); caption.htmlFor = identity; const row = node('div', 'input-row'); row.append(input, node('span', 'input-unit', unit)); const submit = button('ส่งคำตอบ', 'button primary'); submit.type = 'submit';
-  form.append(caption, row, keypad(input), submit); return { form, input, submit };
+  form.append(caption, row, keypad(input, { fractions }), submit); return { form, input, submit };
 }
 function renderNumeric(panel, field, question, unit) {
   panel.append(node('p', 'question', question), audioControls((field === 'transfer' ? MISSION.transfer.story + ' ' : '') + question));
@@ -140,17 +172,17 @@ function renderNumeric(panel, field, question, unit) {
   if (progress.answers[field].correct) status.textContent = 'เก็บคำตอบของช่วงนี้แล้ว ไปต่อได้';
   const actions = node('div', 'lesson-actions'); actions.append(hint, next); panel.append(form, status, actions, hints, node('p', 'fine', 'พิมพ์เลขไทยหรืออารบิกได้ ใช้คำใบ้ช่วยคิดแล้วลองอีกครั้งได้เลย')); update();
 }
-function installDrawing(canvas, trace, status) {
+function installDrawing(canvas, trace, status, { onDraw = markWritingAttempt, strokes = [] } = {}) {
   let ctx; try { ctx = canvas.getContext('2d'); } catch { ctx = null; }
-  const strokes = []; let active = null;
+  let active = null;
   if (!ctx) { status.textContent = 'อุปกรณ์นี้ยังเปิดพื้นที่เขียนไม่ได้ ใช้ปุ่มข้ามได้เลย'; return () => {}; }
   function redraw() { const rect = canvas.getBoundingClientRect(); const width = Math.max(1, rect.width); const height = Math.max(1, rect.height); const dpr = Math.min(window.devicePixelRatio || 1, 3); canvas.width = Math.round(width * dpr); canvas.height = Math.round(height * dpr); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, width, height); if (trace) { ctx.save(); ctx.font = 'bold ' + Math.min(height * .76, width * .46) + 'px Georgia, serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.strokeStyle = '#bdcdb1'; ctx.lineWidth = 2; ctx.setLineDash([3, 6]); ctx.strokeText('14', width / 2, height / 2 + 8); ctx.restore(); } ctx.strokeStyle = '#245f44'; ctx.fillStyle = '#245f44'; ctx.lineWidth = 5; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; strokes.forEach(stroke => { if (!stroke.length) return; ctx.beginPath(); ctx.moveTo(stroke[0].x * width, stroke[0].y * height); stroke.slice(1).forEach(point => ctx.lineTo(point.x * width, point.y * height)); if (stroke.length === 1) { ctx.arc(stroke[0].x * width, stroke[0].y * height, 2.5, 0, Math.PI * 2); ctx.fill(); } else ctx.stroke(); }); }
   function point(event) { const rect = canvas.getBoundingClientRect(); return { x: Math.max(0, Math.min(1, (event.clientX - rect.left) / Math.max(1, rect.width))), y: Math.max(0, Math.min(1, (event.clientY - rect.top) / Math.max(1, rect.height))) }; }
-  canvas.addEventListener('pointerdown', event => { if (active !== null || (event.button !== undefined && event.button !== 0)) return; event.preventDefault(); active = event.pointerId; try { canvas.setPointerCapture(event.pointerId); } catch {} strokes.push([point(event)]); markWritingAttempt(); redraw(); status.textContent = 'ค่อย ๆ เขียนได้เลย ล้างหรือย้อนเส้นได้'; });
+  canvas.addEventListener('pointerdown', event => { if (active !== null || (event.button !== undefined && event.button !== 0)) return; event.preventDefault(); active = event.pointerId; try { canvas.setPointerCapture(event.pointerId); } catch {} strokes.push([point(event)]); onDraw(); redraw(); status.textContent = 'ค่อย ๆ เขียนได้เลย ล้างหรือย้อนเส้นได้'; });
   canvas.addEventListener('pointermove', event => { if (active !== event.pointerId) return; event.preventDefault(); strokes[strokes.length - 1].push(point(event)); redraw(); });
   const finish = event => { if (active === event.pointerId) active = null; }; canvas.addEventListener('pointerup', finish); canvas.addEventListener('pointercancel', finish); canvas.addEventListener('lostpointercapture', finish);
   const resize = () => redraw(); window.addEventListener('resize', resize); redraw();
-  canvas.clearDrawing = () => { strokes.length = 0; active = null; redraw(); }; canvas.undoDrawing = () => { strokes.pop(); active = null; redraw(); }; canvas.hasDrawing = () => strokes.length > 0;
+  canvas.clearDrawing = () => { strokes.length = 0; active = null; redraw(); }; canvas.undoDrawing = () => { strokes.pop(); active = null; redraw(); }; canvas.hasDrawing = () => strokes.length > 0; canvas.redrawDrawing = redraw;
   return () => window.removeEventListener('resize', resize);
 }
 function renderWriting(panel) {
@@ -170,38 +202,134 @@ function renderSummary(panel) {
 }
 
 function elapsed() { return challenge?.active ? Math.max(0, Date.now() - challenge.startedAt) : challenge?.elapsedMs || 0; }
-function updateChallengeStats() { if (!challenge) return; $('challenge-accuracy').textContent = challenge.answered ? challenge.correct + '/' + challenge.answered + ' (' + Math.round(100 * challenge.correct / challenge.answered) + '%)' : '—'; $('challenge-progress').textContent = challenge.answered + '/5'; $('challenge-time').textContent = formatTime(elapsed()); }
-function startChallenge() {
-  if (progress && view === 'learning') saveProgress(); cancelChallenge();
-  challenge = { active: true, index: 0, answered: 0, correct: 0, locked: false, startedAt: Date.now(), elapsedMs: 0, feedback: '', saved: false };
-  showView('challenge'); renderChallenge(); renderRanking(); timer = setInterval(updateChallengeStats, 250); focusHeading('challenge-heading');
+function updateChallengeStats() {
+  if (!challenge) return;
+  $('challenge-accuracy').textContent = challenge.answered ? challenge.correct + '/' + challenge.answered + ' (' + Math.round(100 * challenge.correct / challenge.answered) + '%)' : '—';
+  $('challenge-progress').textContent = challenge.answered + '/5';
+  $('challenge-time').textContent = challenge.mode === 'challenge' ? formatTime(elapsed()) : 'ไม่จับเวลา';
+}
+function startRound(mode, grade = selectedGrade) {
+  const number = Number.isInteger(grade) ? grade : selectedGrade;
+  if (!GRADE_PROFILES.some(item => item.grade === number)) return false;
+  if (progress && view === 'learning') saveProgress(); cancelChallenge(); selectedGrade = number; notice(store.writeGrade(number));
+  const recent = store.readRecent(number);
+  const deck = createQuestionRound(number, { excludeIds: recent.data });
+  const history = store.writeRecent(number, deck.questions.map(question => question.signature)); notice(history);
+  challenge = { mode, grade: number, deck, questions: deck.questions, active: true, index: 0, answered: 0, correct: 0, locked: false, startedAt: Date.now(), elapsedMs: 0, feedback: '', saved: false, attempts: deck.questions.map(() => newAttempt()), hintLevels: [0,0,0,0,0], draft: '', scratchStrokes: deck.questions.map(() => []), scratchOpen: [false,false,false,false,false], justEarned: false, encouragement: 'ค่อย ๆ คิดทีละก้าว เราไปด้วยกัน!' };
+  showView('challenge'); renderChallenge(); renderRanking();
+  if (mode === 'challenge') timer = setInterval(updateChallengeStats, 250);
+  focusHeading('challenge-heading'); return true;
+}
+function startChallenge(grade = selectedGrade) { return startRound('challenge', grade); }
+function startPractice(grade = selectedGrade) { return startRound('practice', grade); }
+function requestPracticeHint(draft) {
+  if (!challenge?.active || challenge.mode !== 'practice' || challenge.locked) return false;
+  if (typeof draft === 'string') challenge.draft = draft;
+  challenge.hintLevels[challenge.index] = 1; renderChallenge(); return true;
+}
+function finishRound() {
+  if (!challenge?.active || challenge.answered !== 5) return false;
+  challenge.elapsedMs = challenge.mode === 'challenge' ? elapsed() : 0; challenge.active = false; stopTimer();
+  if (challenge.mode === 'challenge') {
+    const deck = challenge.deck;
+    const score = { deckId: deck.deckId, deckVersion: deck.deckVersion, grade: challenge.grade, total: 5, correct: challenge.correct, elapsedMs: challenge.elapsedMs, completedAt: Date.now() };
+    const saved = store.writeScore(score); challenge.saved = true; $('score-storage-status').textContent = saved.message; renderRanking(saved.data);
+  }
+  renderChallenge(); return true;
+}
+function roundStars() { return challenge ? challenge.attempts.filter(attempt => challenge.mode === 'practice' ? attempt.correct : attempt.firstCorrect === true).length : 0; }
+function renderAdventure() {
+  if (!challenge) return;
+  $('round-stars-count').textContent = roundStars() + ' / 5';
+  $('round-stars-label').textContent = challenge.mode === 'practice' ? 'ดาวที่คิดสำเร็จ' : 'ดาวคำตอบแรก';
+  $('round-reward-rule').textContent = challenge.mode === 'practice' ? 'คิดสำเร็จได้ดาว ลองใหม่หรือใช้คำใบ้ก็ได้ · เดินครบ 5 จุดรับตราจบรอบ' : 'ได้ดาวเมื่อตอบถูกครั้งแรก · เดินครบ 5 จุดรับตราจบรอบ';
+  $('round-encouragement').textContent = challenge.active ? challenge.encouragement : 'เดินทางครบห้าจุดแล้ว! เก่งมากที่ไม่หยุดลอง';
+  const path = $('round-path'); path.replaceChildren();
+  challenge.questions.forEach((question, index) => {
+    const attempt = challenge.attempts[index], correct = challenge.mode === 'practice' ? attempt.correct : attempt.firstCorrect === true;
+    const item = node('li', 'path-stop' + (correct ? ' correct' : attempt.validCount ? ' tried' : '') + (challenge.active && index === challenge.index ? ' current' : '') + (challenge.justEarned && index === challenge.index ? ' earned' : ''));
+    if (challenge.active && index === challenge.index) item.setAttribute('aria-current', 'step');
+    const symbol = node('span', 'path-symbol', correct ? '✦' : attempt.validCount ? '✓' : String(index + 1));
+    const text = node('small', '', correct ? 'ได้ดาว' : attempt.validCount ? 'ลองแล้ว' : 'จุดที่ ' + (index + 1));
+    symbol.setAttribute('aria-hidden', 'true'); item.setAttribute('aria-label', 'ข้อ ' + (index + 1) + ': ' + (correct ? (challenge.mode === 'practice' ? 'คิดสำเร็จ ได้ดาว' : 'ตอบถูกครั้งแรก ได้ดาว') : attempt.validCount ? 'ได้ลองตอบแล้ว' : 'ยังไม่ได้ตอบ')); item.append(symbol, text); path.append(item);
+  });
+}
+function completionBadge() {
+  const badge = node('div', 'completion-badge'); badge.append(node('span', 'completion-spark spark-a', '✦'), node('span', 'completion-spark spark-b', '✧'), node('span', 'completion-spark spark-c', '✦'), node('span', 'medal', '✓'), node('strong', '', 'นักผจญภัยครบ 5 จุด'), node('small', '', (challenge.mode === 'practice' ? 'ดาวที่คิดสำเร็จ ' : 'ดาวคำตอบแรก ') + roundStars() + '/5'));
+  return badge;
 }
 function submitChallengeAnswer(raw) {
   if (!challenge?.active || challenge.locked) return { valid: false, correct: false };
-  const question = CHALLENGE_DECK.questions[challenge.index]; const result = recordAttempt(newAttempt(), raw, question.answer);
+  const index = challenge.index, question = challenge.questions[index], previous = challenge.attempts[index];
+  const result = recordAttempt(previous, raw, question.answer, { hintLevel: challenge.hintLevels[index], integerOnly: question.integerOnly });
   if (!result.valid) return result;
-  challenge.locked = true; challenge.answered++; if (result.correct) challenge.correct++;
-  challenge.feedback = (result.correct ? 'ถูกต้อง! ' : 'คำตอบคือ ' + question.answer + ' — ') + question.hint;
-  if (challenge.answered === 5) {
-    challenge.elapsedMs = elapsed(); challenge.active = false; stopTimer();
-    const score = { deckId: CHALLENGE_DECK.id, deckVersion: CHALLENGE_DECK.version, grade: 1, total: 5, correct: challenge.correct, elapsedMs: challenge.elapsedMs, completedAt: Date.now() };
-    const saved = store.writeScore(score); challenge.saved = true; $('score-storage-status').textContent = saved.message; renderRanking(saved.data);
-  }
-  renderChallenge(); return result;
+  challenge.attempts[index] = result.attempt; challenge.draft = String(raw); challenge.justEarned = challenge.mode === 'practice' ? result.correct && !previous.correct : previous.validCount === 0 && result.correct;
+  challenge.encouragement = result.correct ? (challenge.justEarned ? 'เยี่ยมเลย! ได้ดาวอีกดวง ✦' : 'เจอแล้ว! การลองใหม่ช่วยให้เราเข้าใจ') : challenge.mode === 'practice' ? 'ไม่เป็นไรนะ ลองคิดใหม่หรือให้พ่อมดช่วยใบ้ได้' : 'ขอบคุณที่ลอง! ดูวิธีคิด แล้วไปจุดถัดไปกัน';
+  if (result.correct && audio.isEnabled() && audio.isAvailable()) audio.speak(challenge.justEarned ? 'เยี่ยมเลย ได้ดาวอีกดวง' : 'ทำได้แล้ว เก่งมาก');
+  if (previous.validCount === 0) { challenge.answered++; if (result.correct) challenge.correct++; }
+  challenge.locked = challenge.mode === 'challenge' || result.correct;
+  challenge.feedback = result.correct ? 'ถูกต้อง! ' + question.hint : challenge.mode === 'challenge' ? 'คำตอบคือ ' + question.answer + ' — ' + question.hint : 'ยังไม่ตรง ลองตรวจอีกครั้ง ขอคำใบ้ หรือไปข้อถัดไปได้';
+  if (challenge.mode === 'challenge' && challenge.answered === 5) finishRound(); else renderChallenge();
+  return result;
 }
-function nextChallengeQuestion() { if (!challenge?.active || !challenge.locked) return false; challenge.index++; challenge.locked = false; challenge.feedback = ''; renderChallenge(); return true; }
+function nextChallengeQuestion() {
+  if (!challenge?.active || (!challenge.locked && !(challenge.mode === 'practice' && challenge.attempts[challenge.index].validCount > 0))) return false;
+  if (challenge.index === 4) return finishRound();
+  challenge.index++; challenge.locked = false; challenge.feedback = ''; challenge.draft = ''; challenge.justEarned = false; challenge.encouragement = 'จุดต่อไปพร้อมแล้ว ค่อย ๆ คิดตามจังหวะของเรา'; renderChallenge(); return true;
+}
+function renderScratchpad(panel) {
+  const round = challenge, index = round.index;
+  const details = node('details', 'scratchpad'); details.id = 'practice-scratchpad'; details.open = round.scratchOpen[index];
+  const summary = node('summary', '', '✎ สมุดคิดของฉัน'); const content = node('div', 'scratchpad-body');
+  const canvas = node('canvas', 'writing-canvas scratchpad-canvas'); canvas.id = 'practice-scratchpad-canvas'; canvas.setAttribute('role', 'img'); canvas.setAttribute('aria-label', 'พื้นที่วาดรูปหรือเขียนวิธีคิดของฉัน'); canvas.tabIndex = 0;
+  const status = feedback(); const tools = node('div', 'writing-tools');
+  const undo = button('ย้อนเส้น', '', () => canvas.undoDrawing?.()); undo.id = 'scratchpad-undo'; const clear = button('ล้างสมุด', '', () => canvas.clearDrawing?.()); clear.id = 'scratchpad-clear'; tools.append(undo, clear);
+  content.append(node('p', 'scratchpad-invite', 'วาดรูปหรือเขียนวิธีคิดได้เลย'), canvas, tools, status, node('p', 'fine', 'รอยเขียนอยู่ในข้อนี้ เปิดคำใบ้หรือลองใหม่ยังเก็บไว้ เปลี่ยนข้อจะเริ่มหน้าใหม่ ส่งคำตอบด้วยช่องตัวเลขตามเดิม'));
+  details.append(summary, content); panel.append(details);
+  cleanupDrawing = installDrawing(canvas, false, status, { onDraw: () => {}, strokes: round.scratchStrokes[index] });
+  details.addEventListener('toggle', () => { if (challenge !== round) return; round.scratchOpen[index] = details.open; if (details.open) canvas.redrawDrawing?.(); });
+}
 function renderChallenge() {
-  if (!challenge) return; updateChallengeStats(); const panel = $('challenge-panel'); panel.replaceChildren();
-  if (!challenge.active) { const finalHeading = node('h2', 'challenge-question', 'ถูก ' + challenge.correct + ' จาก 5 ข้อ'); finalHeading.tabIndex = -1; panel.append(node('span', 'tiny-label', 'จบรอบท้าทาย'), finalHeading, node('p', '', 'เวลารวม ' + formatTime(challenge.elapsedMs) + ' · ' + (challenge.correct * 20) + '%'), node('p', 'feedback', challenge.feedback)); const actions = node('div', 'lesson-actions'); actions.append(button('ลองรอบใหม่', 'button primary', startChallenge), button('กลับหน้าเริ่ม', 'button outline', goHome)); panel.append(actions, node('p', 'fine', 'เก่งมากที่ลองคิดจนครบ! ลองรอบใหม่หรือพักก่อนก็ได้ ไม่ต้องรีบ')); finalHeading.focus(); return; }
-  const question = CHALLENGE_DECK.questions[challenge.index]; const heading = node('h2', 'challenge-question', question.prompt); heading.tabIndex = -1; panel.append(node('span', 'tiny-label', 'ข้อ ' + (challenge.index + 1) + ' / 5'), heading);
-  const { form, input, submit } = numberForm('คำตอบ', '', 'challenge-answer'); const status = feedback(); status.textContent = challenge.feedback; input.disabled = submit.disabled = challenge.locked;
-  form.addEventListener('submit', event => { event.preventDefault(); const result = submitChallengeAnswer(input.value); if (!result.valid && challenge?.active && !challenge.locked) { status.textContent = 'พิมพ์เลขจำนวนเต็มก่อน ยังไม่นับเป็นคำตอบ'; input.setAttribute('aria-invalid', 'true'); input.focus(); } }); panel.append(form, status);
-  if (challenge.locked) { const next = button('ข้อต่อไป →', 'button primary', nextChallengeQuestion); panel.append(next); next.focus(); } else heading.focus();
+  if (!challenge) return;
+  if (cleanupDrawing) { cleanupDrawing(); cleanupDrawing = null; }
+  const practice = challenge.mode === 'practice';
+  $('round-scope').textContent = 'ป.' + challenge.grade + ' · โจทย์สุ่มตามชั้น';
+  $('challenge-heading').textContent = practice ? 'ค่อย ๆ คิด ลองได้อีกครั้ง' : 'ลองคิดด้วยตัวเอง';
+  $('round-rules').textContent = practice ? 'ไม่จับเวลา · ขอคำใบ้และลองใหม่ได้ · โหมดฝึกไม่จัดอันดับ' : 'เวลาเดินขึ้น ไม่มีหมดเวลา · ไม่มีคำใบ้ก่อนตอบ · รับคำตอบครั้งเดียวต่อข้อ';
+  $('round-time-stat').hidden = practice; $('round-ranking').hidden = practice;
+  $('round-layout').className = 'challenge-layout' + (practice ? ' practice-layout' : '');
+  $('round-accuracy-label').textContent = 'ถูกครั้งแรก'; updateChallengeStats(); renderAdventure();
+  const panel = $('challenge-panel'); panel.replaceChildren();
+  if (!challenge.active) {
+    const heading = node('h2', 'challenge-question', practice ? 'ฝึกครบ 5 ข้อแล้ว!' : 'จบรอบท้าทาย!'); heading.tabIndex = -1;
+    const independent = challenge.attempts.filter(attempt => attempt.independent).length; panel.append(completionBadge());
+    panel.append(node('span', 'tiny-label', 'ป.' + challenge.grade + ' · ' + (practice ? 'สรุปการฝึก' : 'สรุปท้าทาย')), heading, node('p', '', 'ถูกครั้งแรก ' + challenge.correct + '/5 · ' + (challenge.correct * 20) + '%'));
+    if (practice) panel.append(node('p', '', 'ทำเองถูกครั้งแรกโดยไม่ใบ้ ' + independent + '/5'), node('p', 'fine', 'คำตอบครั้งแรกเก็บแยกจากการแก้ได้หลังลองใหม่ โหมดฝึกไม่บันทึกอันดับ'));
+    else panel.append(node('p', '', 'เวลารวม ' + formatTime(challenge.elapsedMs)));
+    panel.append(node('p', 'feedback', challenge.feedback));
+    const actions = node('div', 'lesson-actions'); actions.append(button('สุ่มชุดใหม่ ป.' + challenge.grade, 'button primary', () => startRound(challenge.mode, challenge.grade)), button('กลับไปเลือกชั้น', 'button outline', goHome));
+    panel.append(actions, node('p', 'fine', 'ขอบคุณที่ลองคิดจนครบ! ชุดใหม่มีตัวเลขและสถานการณ์เปลี่ยนไป พักก่อนก็ได้')); heading.focus(); return;
+  }
+  const question = challenge.questions[challenge.index], heading = node('h2', 'challenge-question', question.prompt); heading.tabIndex = -1;
+  panel.append(node('span', 'tiny-label', 'ข้อ ' + (challenge.index + 1) + ' / 5 · ' + question.topic), heading, audioControls(question.prompt));
+  if (practice) renderScratchpad(panel);
+  const { form, input, submit } = numberForm('คำตอบ', '', 'challenge-answer', { fractions: !question.integerOnly }); const status = feedback(); status.textContent = challenge.feedback; if (challenge.locked && challenge.attempts[challenge.index].correct) status.className = 'feedback success success-bloom';
+  input.value = challenge.draft; input.disabled = submit.disabled = challenge.locked;
+  form.addEventListener('submit', event => { event.preventDefault(); const result = submitChallengeAnswer(input.value); if (!result.valid && challenge?.active && !challenge.locked) { status.textContent = question.integerOnly ? 'พิมพ์จำนวนเต็มก่อน ยังไม่นับเป็นคำตอบ' : 'พิมพ์จำนวนหรือเศษส่วน เช่น 3/4 ตัวส่วนต้องไม่เป็นศูนย์ ยังไม่นับเป็นคำตอบ'; input.setAttribute('aria-invalid', 'true'); input.focus(); } });
+  panel.append(form, status);
+  if (!question.integerOnly) panel.append(node('p', 'fine', 'พิมพ์เศษส่วนด้วย / หรือทศนิยมที่มีค่าเท่ากันได้ เช่น 3/4 = 0.75'));
+  if (practice) {
+    const hint = button(challenge.hintLevels[challenge.index] ? 'เปิดคำใบ้แล้ว' : 'ขอคำใบ้', 'button hint-button compact', () => requestPracticeHint(input.value)); hint.disabled = challenge.locked || challenge.hintLevels[challenge.index] > 0; panel.append(hint);
+    if (challenge.hintLevels[challenge.index]) panel.append(node('p', 'hint-box', question.hint));
+  }
+  if (challenge.locked || (practice && challenge.attempts[challenge.index].validCount > 0)) { const next = button(challenge.index === 4 ? 'ดูผลรอบนี้ →' : 'ข้อต่อไป →', 'button primary', nextChallengeQuestion); const actions = node('div', 'lesson-actions'); actions.append(next); panel.append(actions); if (challenge.locked) next.focus(); else input.focus(); } else heading.focus();
 }
 function renderRanking(rows) {
   const result = rows ? { data: rows } : store.readScores(); if (result.message) $('score-storage-status').textContent = result.message;
-  const ranking = rankScores(result.data).slice(0, 10); const list = $('ranking-list'); list.replaceChildren();
-  if (!ranking.length) list.append(node('li', '', 'ยังไม่มีรอบที่ทำครบ ลองเล่นตามจังหวะของเราได้เลย'));
+  const grade = challenge?.grade || selectedGrade, deckId = challenge?.deck.deckId || 'g' + grade + '-random', deckVersion = challenge?.deck.deckVersion || QUESTION_PROFILE_VERSION;
+  $('ranking-scope').textContent = 'ป.' + grade + ' · รอบท้าทายโจทย์สุ่มของชั้นนี้';
+  const ranking = rankScores(result.data, { grade, deckId, deckVersion }).slice(0, 10); const list = $('ranking-list'); list.replaceChildren();
+  if (!ranking.length) list.append(node('li', '', 'ยังไม่มีรอบท้าทายที่ทำครบของชั้นนี้'));
   ranking.forEach(row => { const li = node('li'); li.append(node('strong', '', 'อันดับ ' + row.rank + ' · พ่อมดฝึกหัด'), node('div', '', row.correct + '/5 · ' + (row.correct * 20) + '% · ' + (row.elapsedMs / 1000).toFixed(3) + ' วินาที')); list.append(li); });
 }
 function openParentGate() {
@@ -215,16 +343,17 @@ function renderParents() {
   learning.append(node('p', '', 'ลองช่วยต่อ: จัดของ 9 ชิ้นกับ 6 ชิ้น ชวนเด็กเติมให้ครบสิบ แล้วถามว่าส่วนที่เหลือมาจากไหน'), node('p', 'fine', 'ผลนี้แยกการทำเองจากการใช้ตัวช่วย การจบเรื่องเดียวไม่ใช่หลักฐาน mastery และไม่อ้างว่าพัฒนาการเกิดจากเกมแล้ว'));
   const contacts = node('section', 'parent-box'); contacts.append(node('h2', '', 'Math wizard by DR.Suwan'), node('p', '', 'เห็นวิธีคิดของลูก แล้วต่อยอดให้ตรงจุด'), node('p', 'fine', 'ลิงก์ต่อไปนี้ออกจากเกมเมื่อกด ไม่มีการส่งคำตอบหรือข้อมูลเด็กไปช่องทางเหล่านี้อัตโนมัติ'));
   const list = node('ul', 'contact-list'); CONTACTS.forEach(contact => { if (!/^(https?:|tel:|mailto:)/.test(contact.url)) return; const li = node('li'); const a = node('a', '', contact.label + ' ↗'); a.href = contact.url; if (contact.url.startsWith('http')) { a.target = '_blank'; a.rel = 'noopener noreferrer'; } li.append(a); list.append(li); }); contacts.append(list); columns.append(learning, contacts); panel.append(columns);
-  panel.append(node('p', 'fine', 'รุ่นนี้มีภารกิจแรกหนึ่งเรื่องและชุดท้าทายแยกกัน เก็บข้อมูลบนเบราว์เซอร์ที่เล่นเมื่อรองรับ ไม่ซิงก์ข้ามเครื่อง ไม่ขอชื่อจริงเด็ก'));
+  panel.append(node('p', 'fine', 'รุ่นนี้มีโจทย์สุ่มฝึกและท้าทายแยก ป.1–4 และภารกิจทำสิบพร้อมภาพ/เขียนสำหรับ ป.1 หนึ่งเรื่อง เก็บข้อมูลบนเบราว์เซอร์ที่เล่นเมื่อรองรับ ไม่ซิงก์ข้ามเครื่อง ไม่ขอชื่อจริงเด็ก'));
   const clear = node('div', 'inline-confirm'); clear.hidden = true; clear.append(node('p', '', 'ลบความคืบหน้าฝึกบนเครื่องนี้? คะแนนท้าทายจะไม่ถูกลบ'), button('ยืนยันลบความคืบหน้า', 'button outline compact', () => { const result = store.clearProgress(); progress = null; notice(result); renderParents(); }), button('เก็บข้อมูลเดิม', 'button pale compact', () => { clear.hidden = true; })); panel.append(button('ลบความคืบหน้าฝึกบนเครื่องนี้', 'button outline compact', () => { clear.hidden = false; }), clear);
 }
 
 $('start-mission').addEventListener('click', () => { if (progress) { $('new-mission-confirm').hidden = false; $('confirm-new').focus(); } else startNewMission(); });
 $('confirm-new').addEventListener('click', startNewMission); $('cancel-new').addEventListener('click', () => { $('new-mission-confirm').hidden = true; });
-$('resume-mission').addEventListener('click', resumeMission); $('start-challenge').addEventListener('click', startChallenge);
+$('resume-mission').addEventListener('click', resumeMission); $('start-practice').addEventListener('click', () => startPractice()); $('start-challenge').addEventListener('click', () => startChallenge());
+document.querySelectorAll('[data-grade]').forEach(item => item.addEventListener('click', () => selectGrade(Number(item.dataset.grade))));
 $('pause-mission').addEventListener('click', goHome); $('brand-home').addEventListener('click', goHome); $('leave-challenge').addEventListener('click', goHome); $('parents-home').addEventListener('click', goHome); $('open-parents').addEventListener('click', openParentGate);
 $('audio-toggle').addEventListener('click', () => { audio.setEnabled(!audio.isEnabled()); const enabled = audio.isEnabled(); $('audio-toggle').textContent = enabled ? 'เสียง: เปิด' : 'เสียง: ปิด'; $('audio-toggle').setAttribute('aria-pressed', String(enabled)); });
 window.addEventListener('beforeunload', () => { if (progress && view === 'learning') saveProgress(); audio.stop(); stopTimer(); });
 notice(initial); showView('home'); renderHome();
-export function getAppState() { return JSON.parse(JSON.stringify({ view, progress, challenge })); }
-export const appActions = { startNewMission, resumeMission, goHome, startChallenge, submitLearningAnswer, requestHint, moveLight, advanceLearning, markWritingAttempt, completeTrace, confirmWriting, skipWriting, submitChallengeAnswer, nextChallengeQuestion, openParentGate, renderParents };
+export function getAppState() { return JSON.parse(JSON.stringify({ view, selectedGrade, progress, challenge, round: challenge })); }
+export const appActions = { startNewMission, resumeMission, goHome, selectGrade, startPractice, startChallenge, requestPracticeHint, submitLearningAnswer, requestHint, moveLight, advanceLearning, markWritingAttempt, completeTrace, confirmWriting, skipWriting, submitChallengeAnswer, nextChallengeQuestion, openParentGate, renderParents };
