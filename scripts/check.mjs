@@ -4,7 +4,7 @@ import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
-const required = ['index.html', 'styles.css', 'app.js', 'lib/content.js', 'lib/questions.js', 'lib/engine.js', 'lib/storage.js', 'lib/audio.js', 'assets/logo.jpg'];
+const required = ['index.html', 'styles.css', 'app.js', 'lib/content.js', 'lib/questions.js', 'lib/handwriting.js', 'lib/handwriting-content.js', 'lib/engine.js', 'lib/storage.js', 'lib/audio.js', 'assets/logo.jpg'];
 for (const file of required) if (!statSync(path.join(root, file)).isFile()) throw new Error(`Missing ${file}`);
 const walk = folder => readdirSync(folder, { withFileTypes: true }).flatMap(item => item.isDirectory() ? walk(path.join(folder, item.name)) : [path.join(folder, item.name)]);
 for (const file of [path.join(root, 'app.js'), ...walk(path.join(root, 'lib'))].filter(file => file.endsWith('.js'))) {

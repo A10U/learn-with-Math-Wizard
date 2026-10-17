@@ -1,9 +1,9 @@
 {
   "name": "learn-with-math-wizard",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
-  "description": "Math Wizard Quest: randomized grade 1–4 math adventures",
+  "description": "Math Wizard Quest: handwriting, tracing, matching, coins and grade 1–4 math adventures",
   "scripts": {
     "dev": "node scripts/serve.mjs",
     "check": "node scripts/check.mjs",
