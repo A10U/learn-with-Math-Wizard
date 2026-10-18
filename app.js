@@ -10,6 +10,7 @@ import { PENCIL_COLORS } from './lib/drawing.js';
 import { createArcadeController, renderArcadeMenu } from './lib/arcade-ui.js';
 import { ARCADE_MODES } from './lib/arcade.js';
 import { createAdventureController } from './lib/adventure-ui.js';
+import { getCampaignInfo } from './lib/adventure.js';
 import { initializeLanguage, getLanguage, setLanguage, t, translateStatic } from './lib/i18n.js';
 
 const $ = id => document.getElementById(id);
@@ -79,9 +80,9 @@ function renderHome() {
   $('motor-mode-note').textContent = t(motorRequired ? 'เขียน/ลากเส้นเป็นขั้นหลัก · แป้นตัวเลขใช้ยืนยันเลขที่เขียน' : 'ผู้ปกครองเปิดวิธีช่วย: ใช้แป้นตัวเลข ข้าม หรือแตะจับคู่แทนได้');
   $('home-symbol').textContent = t(selectedGrade === 1 ? '+ −' : selectedGrade === 2 ? '× ÷' : selectedGrade >= 5 ? '% ½' : '½ ¼');
   const english = getLanguage() === 'en';
-  $('home-adventure-heading').textContent = english ? 'A new adventure awaits' : 'ออกเดินทางสู่โลกเวทมนตร์';
-  $('home-adventure-description').textContent = english ? 'Explore the forest: build a bridge, plan a route and meet the guardian.' : 'เดินป่า ต่อสะพาน วางแผนเส้นทาง และพบผู้พิทักษ์';
-  $('home-adventure-scope').textContent = english ? `Grade ${selectedGrade} · 5 stages · practice or 3-minute ranked run · local TOP 10` : `ป.${selectedGrade} · 5 ด่าน · ฝึกหรือจับเวลา 3 นาที · TOP 10 บนเครื่อง`;
+  $('home-adventure-heading').textContent = english ? 'Eight paths through the wizard world' : '8 เส้นทางผจญภัยโลกเวทมนตร์';
+  $('home-adventure-description').textContent = english ? 'Clear stages to unlock new chapters, explore the 100-floor tower and face the final guardian.' : 'ผ่านด่านเพื่อปลดล็อกบทใหม่ สำรวจหอคอย 100 ชั้น และไปถึงบทปราบจอมมาร';
+  $('home-adventure-scope').textContent = english ? `Grade ${selectedGrade} · 8 chapters · 135 stages · saved checkpoints · local TOP 10` : `ป.${selectedGrade} · 8 บท · 135 ด่าน · บันทึกจุดพัก · TOP 10 บนเครื่อง`;
   $('start-adventure').textContent = english ? 'Enter the adventure world →' : 'เข้าสู่โลกผจญภัย →';
 }
 function selectPracticeTopic(topic) {
@@ -141,12 +142,13 @@ function startArcade(mode, grade = selectedGrade) {
   arcade.start(grade, mode); selectedGrade = grade; notice(store.writeGrade(grade)); cancelChallenge(); showView('arcade');
   const heading = $('arcade-panel').querySelector?.('h1'); if (heading) { heading.tabIndex = -1; heading.focus(); } return true;
 }
-function startAdventure(grade = selectedGrade) {
-  if (!GRADE_PROFILES.some(profile => profile.grade === grade)) return false;
+function startAdventure(grade = selectedGrade, campaign = 'forest') {
+  if (!GRADE_PROFILES.some(profile => profile.grade === grade) || !getCampaignInfo(campaign)) return false;
+  if (!adventure.start(grade, campaign)) return false;
   if (progress && view === 'learning') saveProgress();
   if (selectedGrade !== grade) selectedPracticeTopic = null;
   selectedGrade = grade; notice(store.writeGrade(grade)); cancelChallenge(); showView('adventure');
-  adventure.start(grade); return true;
+  return true;
 }
 function startNewMission() { cancelChallenge(); guidedChoices = {}; guidedInk = { base: newAnswerInk(), transfer: newAnswerInk(), trace: newAnswerInk(), write: newAnswerInk() }; progress = createLearningState(); saveProgress(); showView('learning'); renderLearning(); }
 function resumeMission() { if (!progress) return; cancelChallenge(); repairMotorCheckpoint(); showView('learning'); renderLearning(); }
