@@ -4,7 +4,9 @@ import { createStore } from './lib/storage.js';
 import { createAudio } from './lib/audio.js';
 import { GRADE_PROFILES, QUESTION_PROFILE_VERSION, WRITING_PROFILE_VERSION, createQuestionRound } from './lib/questions.js';
 import { createHandwritingRound } from './lib/handwriting-content.js';
+import { GEOMETRY_SHAPES, geometryPaths, createGeometryRound } from './lib/geometry.js';
 import { mountHandwritingCanvas } from './lib/handwriting.js';
+import { PENCIL_COLORS } from './lib/drawing.js';
 
 const $ = id => document.getElementById(id);
 const store = createStore();
@@ -14,6 +16,9 @@ let progress = initial.data;
 let view = 'home';
 let selectedGrade = store.readGrade().data;
 let motorRequired = store.readMotorRequired().data;
+let smoothLines = true;
+let pencilColor = '#245f44';
+const pencilButtons = [];
 let parentUnlocked = false;
 let activeAnswerMotor = null;
 let activeTraceMotor = null;
@@ -51,6 +56,7 @@ function renderHome() {
   document.querySelectorAll('[data-grade]').forEach(item => item.setAttribute('aria-pressed', String(Number(item.dataset.grade) === selectedGrade)));
   $('grade-profile-description').textContent = 'โจทย์คิดเลข ป.' + selectedGrade + ' · ' + profile.description;
   $('home-grade-tag').textContent = 'พร้อมฝึก ป.' + selectedGrade;
+  $('geometry-count').textContent = (selectedGrade <= 2 ? '6 รูป · สลับลากและวาด 12 กิจกรรม' : '8 รูป · สลับลากและวาด 16 กิจกรรม');
   $('home-scene-title').textContent = 'ประตูเวทคณิต ป.' + selectedGrade;
   $('home-challenge-label').textContent = 'ท้าทาย' + (motorRequired ? 'เขียน' : 'พิมพ์') + ' 5 ข้อ · ป.' + selectedGrade;
   $('motor-mode-note').textContent = motorRequired ? 'เขียน/ลากเส้นเป็นขั้นหลัก · แป้นตัวเลขใช้ยืนยันเลขที่เขียน' : 'ผู้ปกครองเปิดวิธีช่วย: ใช้แป้นตัวเลข ข้าม หรือแตะจับคู่แทนได้';
@@ -93,7 +99,7 @@ function mountAnswerSurface(panel, ink, { scope, canvasId, confirmId, trace = fa
   const confirm = button(trace ? 'ลากครบแล้ว' : 'ยืนยันเลขที่เขียน →', 'button primary motor-confirm', () => confirmAnswerWriting(scope)); confirm.id = confirmId;
   surface.append(canvas, controls, status, confirm); panel.append(surface);
   function refresh() { const unlocked = inkCanSubmit(scope, ink); confirm.disabled = !inkCanConfirm(ink); confirm.hidden = !motorRequired || trace || unlocked; onGate(unlocked); }
-  control = mountHandwritingCanvas(canvas, { activity: { kind: trace ? 'trace' : 'copy', target }, strokes: ink.strokes, connections: [], requireGesture: motorRequired, onChange: statusValue => {
+  control = mountHandwritingCanvas(canvas, { activity: { kind: trace ? 'trace' : 'copy', target }, strokes: ink.strokes, connections: [], requireGesture: motorRequired, smooth: () => smoothLines, color: () => pencilColor, onChange: statusValue => {
     ink.writingReady = statusValue.ready;
     if (statusValue.change === 'stroke') { ink.inkRevision++; const stroke = ink.strokes[ink.strokes.length - 1]; if (stroke && !ink.freshStrokes.includes(stroke)) ink.freshStrokes.push(stroke); }
     ink.freshStrokes = ink.freshStrokes.filter(stroke => ink.strokes.includes(stroke));
@@ -237,7 +243,7 @@ function renderWriting(panel) {
     const next = button('ลากครบแล้ว ไปต่อ →', 'button primary', completeTrace); const controls = node('div', 'writing-tools'); let control;
     controls.append(button('ย้อนเส้น', '', () => control?.undo()), button('ล้างแล้วเขียนใหม่', '', () => control?.clear())); panel.append(canvas, controls, status);
     const actions = node('div', 'lesson-actions'); actions.append(next); if (!motorRequired) actions.append(button('ข้ามตามรอย', 'button outline', skipWriting)); panel.append(actions);
-    control = mountHandwritingCanvas(canvas, { activity: { kind: 'trace', target: '14' }, strokes: ink.strokes, requireGesture: motorRequired, onChange: value => { ink.writingReady = value.ready; if (value.hasDrawing) progress.writing.attempted = true; status.textContent = motorMessage(value); next.disabled = !value.ready; } });
+    control = mountHandwritingCanvas(canvas, { activity: { kind: 'trace', target: '14' }, strokes: ink.strokes, requireGesture: motorRequired, smooth: () => smoothLines, color: () => pencilColor, onChange: value => { ink.writingReady = value.ready; if (value.hasDrawing) progress.writing.attempted = true; status.textContent = motorMessage(value); next.disabled = !value.ready; } });
     activeTraceMotor = control; cleanupDrawing = () => { control.cleanup(); if (activeTraceMotor === control) activeTraceMotor = null; };
     canvas.hasDrawing = () => control.hasDrawing(); canvas.undoDrawing = () => control.undo(); canvas.clearDrawing = () => control.clear();
     next.disabled = !control.isReady();
@@ -401,8 +407,42 @@ function startHandwriting(mode = 'mixed', grade = selectedGrade) {
     activities = []; const cycle = ['trace', 'copy', 'path', 'connect', 'coins'];
     while (cycle.some(kind => queues[kind].length > 0)) cycle.forEach(kind => { const activity = queues[kind].shift(); if (activity) activities.push(activity); });
   } else activities = generated.activities.filter(activity => activity.kind === mode);
-  handwriting = { mode, grade: number, title: writingModes[mode], activities, index: 0, completed: false, completions: activities.map(() => false), skips: activities.map(() => false), strokes: activities.map(() => []), connections: activities.map(() => []), coinCounts: activities.map(activity => activity.kind === 'coins' ? activity.startCount : 0), selectedLeft: null, feedback: '' };
+  handwriting = { source: 'numbers', mode, grade: number, title: writingModes[mode], activities, index: 0, completed: false, completions: activities.map(() => false), skips: activities.map(() => false), strokes: activities.map(() => []), connections: activities.map(() => []), coinCounts: activities.map(activity => activity.kind === 'coins' ? activity.startCount : 0), selectedLeft: null, feedback: '' };
   showView('handwriting'); renderHandwriting(); return true;
+}
+const geometryModes = { geometryMixed: 'สนุกกับรูปเรขาคณิต', geometryTrace: 'ลากตามรอยรูป', geometryCopy: 'ดูรูปแล้ววาดเอง', geometryCreative: 'วาดภาพสร้างสรรค์' };
+function startGeometry(mode = 'geometryMixed', grade = selectedGrade) {
+  const number = Number(grade); if (!Object.hasOwn(geometryModes, mode) || !GRADE_PROFILES.some(profile => profile.grade === number)) return false;
+  if (progress && view === 'learning') saveProgress(); cancelChallenge(); selectedGrade = number; notice(store.writeGrade(number));
+  const contentMode = { geometryMixed: 'mixed', geometryTrace: 'trace', geometryCopy: 'copy', geometryCreative: 'creative' }[mode];
+  const { activities } = createGeometryRound(number, { mode: contentMode });
+  handwriting = { source: 'geometry', mode, grade: number, title: geometryModes[mode], activities, index: 0, completed: false, completions: activities.map(() => false), skips: activities.map(() => false), strokes: activities.map(() => []), connections: activities.map(() => []), coinCounts: activities.map(() => 0), selectedLeft: null, feedback: '' };
+  showView('handwriting'); renderHandwriting(); return true;
+}
+function renderPencilPalette() {
+  const palette = $('pencil-colors'); palette.replaceChildren(); pencilButtons.length = 0;
+  PENCIL_COLORS.forEach(item => {
+    const choice = button('', 'pencil-color', () => setPencilColor(item.color)); choice.dataset.pencilColor = item.color; choice.setAttribute('aria-label', 'ดินสอสี' + item.label); choice.setAttribute('aria-pressed', String(item.color === pencilColor));
+    const swatch = node('span', 'pencil-swatch'); swatch.style.backgroundColor = item.color; swatch.setAttribute('aria-hidden', 'true'); choice.append(swatch, node('span', '', item.label)); palette.append(choice); pencilButtons.push(choice);
+  });
+  $('pencil-selected').textContent = 'กำลังใช้สี' + (PENCIL_COLORS.find(item => item.color === pencilColor)?.label || 'เขียว');
+}
+function setPencilColor(value) {
+  const selected = PENCIL_COLORS.find(item => item.color === value); if (!selected) return false;
+  pencilColor = selected.color; pencilButtons.forEach(choice => choice.setAttribute('aria-pressed', String(choice.dataset.pencilColor === pencilColor))); $('pencil-selected').textContent = 'กำลังใช้สี' + selected.label; return true;
+}
+function setSmoothLines(value) {
+  if (typeof value !== 'boolean') return false;
+  smoothLines = value; const toggle = $('smooth-toggle'); toggle.textContent = 'เส้นนุ่ม: ' + (value ? 'เปิด' : 'ปิด'); toggle.setAttribute('aria-pressed', String(value));
+  new Set([activeAnswerMotor?.control, activeTraceMotor, handwritingCanvas]).forEach(control => control?.redraw()); return true;
+}
+function renderGeometryExample(panel, activity) {
+  const figure = node('figure', 'geometry-example'); const canvas = node('canvas'); canvas.id = 'geometry-example'; canvas.width = 400; canvas.height = 400; canvas.setAttribute('role', 'img'); canvas.setAttribute('aria-label', 'ตัวอย่าง' + activity.shapeName + ' สำหรับดูแล้ววาดเอง');
+  const shape = GEOMETRY_SHAPES.find(item => item.id === activity.shapeId);
+  figure.append(canvas, node('figcaption', '', activity.shapeName), node('p', 'fine', shape?.description || '')); panel.append(figure);
+  let context; try { context = canvas.getContext('2d'); } catch {} if (!context) return;
+  context.strokeStyle = '#245f44'; context.lineWidth = 9; context.lineJoin = 'round'; context.lineCap = 'round';
+  geometryPaths(activity.shapeId, { aspectRatio: 1 }).forEach(path => { context.beginPath(); path.forEach((point, index) => { if (index === 0) context.moveTo(point.x * 400, point.y * 400); else context.lineTo(point.x * 400, point.y * 400); }); context.stroke(); });
 }
 function handwritingReady() {
   if (!handwriting || handwriting.completed) return false;
@@ -481,21 +521,23 @@ function renderHandwriting() {
   $('handwriting-progress').textContent = handwriting.completed ? 'เล่นครบ ' + total + ' กิจกรรมแล้ว' : 'กิจกรรม ' + (handwriting.index + 1) + ' จาก ' + total;
   $('handwriting-progress-fill').style.width = ((handwriting.completed ? total : handwriting.index) / total * 100) + '%';
   if (handwriting.completed) {
-    $('handwriting-heading').textContent = 'ได้ฝึกมือกันเต็มที่แล้ว!'; const badge = node('div', 'handwriting-complete'); badge.append(node('span', 'medal', '✎'), node('h2', '', 'ขอบคุณที่ลองเล่นจนจบ'), node('p', '', 'ลงมือทำ ' + done + ' กิจกรรม · เลือกข้าม ' + handwriting.skips.filter(Boolean).length + ' กิจกรรม'), node('p', 'fine', 'ดาวสำหรับความตั้งใจและกิจกรรมที่เราได้ลงมือฝึก')); const actions = node('div', 'lesson-actions'); actions.append(button('สุ่มเล่นชุดใหม่', 'button primary', () => startHandwriting(handwriting.mode, handwriting.grade)), button('กลับไปเลือกเกม', 'button outline', goHome)); panel.append(badge, actions); focusHeading('handwriting-heading'); return;
+    $('handwriting-heading').textContent = 'ได้ฝึกมือกันเต็มที่แล้ว!'; const badge = node('div', 'handwriting-complete'); badge.append(node('span', 'medal', '✎'), node('h2', '', 'ขอบคุณที่ลองเล่นจนจบ'), node('p', '', 'ลงมือทำ ' + done + ' กิจกรรม · เลือกข้าม ' + handwriting.skips.filter(Boolean).length + ' กิจกรรม'), node('p', 'fine', 'ดาวสำหรับความตั้งใจและกิจกรรมที่เราได้ลงมือฝึก')); const actions = node('div', 'lesson-actions'); actions.append(button('สุ่มเล่นชุดใหม่', 'button primary', () => handwriting.source === 'geometry' ? startGeometry(handwriting.mode, handwriting.grade) : startHandwriting(handwriting.mode, handwriting.grade)), button('กลับไปเลือกเกม', 'button outline', goHome)); panel.append(badge, actions); focusHeading('handwriting-heading'); return;
   }
   const activity = handwriting.activities[handwriting.index]; $('handwriting-heading').textContent = activity.title;
   panel.append(node('p', 'workshop-instruction', activity.instruction), audioControls(activity.instruction));
   if (activity.kind === 'copy') panel.append(node('div', 'number-copy-target', activity.target));
+  if (activity.kind === 'shape-copy') renderGeometryExample(panel, activity);
+  if (activity.kind === 'creative') panel.append(node('p', 'creative-note', 'วาดได้ตามจินตนาการของเรา ไม่มีคำตอบเดียว ✨'));
   const status = feedback(); status.id = 'handwriting-status';
-  const next = button(activity.kind === 'trace' || activity.kind === 'copy' ? 'เขียนแล้ว ไปต่อ →' : 'ทำได้แล้ว ไปต่อ →', 'button primary', nextHandwritingActivity); next.id = 'handwriting-next'; next.disabled = true;
+  const next = button(activity.kind === 'trace' || activity.kind === 'copy' ? 'เขียนแล้ว ไปต่อ →' : ['shape-trace', 'shape-copy', 'creative'].includes(activity.kind) ? 'วาดแล้ว ไปต่อ →' : 'ทำได้แล้ว ไปต่อ →', 'button primary', nextHandwritingActivity); next.id = 'handwriting-next'; next.disabled = true;
   const actions = node('div', 'lesson-actions'); actions.append(next); if (!motorRequired) actions.append(button('ข้ามกิจกรรมนี้', 'button outline', skipHandwritingActivity));
   if (activity.kind === 'coins') { const game = node('div', 'coin-game'); game.id = 'coin-game'; panel.append(game, status, actions); renderCoins(game, activity); }
   else {
-    const canvas = node('canvas', 'handwriting-game-canvas'); canvas.id = 'handwriting-canvas'; canvas.setAttribute('role', 'img'); canvas.setAttribute('aria-label', activity.kind === 'trace' ? 'เขียนตามรอยเลข ' + activity.target : activity.kind === 'copy' ? 'พื้นที่เขียนเลขด้วยตัวเอง' : activity.kind === 'path' ? 'ลากเส้นตามทางจากจุดเริ่มถึงจุดจบ' : 'ลากเส้นจับคู่ฝั่งซ้ายและฝั่งขวา'); canvas.tabIndex = 0;
+    const canvas = node('canvas', 'handwriting-game-canvas'); canvas.id = 'handwriting-canvas'; canvas.setAttribute('role', 'img'); canvas.setAttribute('aria-label', activity.kind === 'trace' ? 'เขียนตามรอยเลข ' + activity.target : activity.kind === 'copy' ? 'พื้นที่เขียนเลขด้วยตัวเอง' : activity.kind === 'path' ? 'ลากเส้นตามทางจากจุดเริ่มถึงจุดจบ' : activity.kind === 'shape-trace' ? 'ลากตามรอย' + activity.shapeName + ' ให้ครบและกลับจุดเริ่ม' : activity.kind === 'shape-copy' ? 'พื้นที่ว่างสำหรับวาด' + activity.shapeName + ' จากตัวอย่าง' : activity.kind === 'creative' ? 'พื้นที่วาดภาพสร้างสรรค์ตามจินตนาการ' : 'ลากเส้นจับคู่ฝั่งซ้ายและฝั่งขวา'); canvas.tabIndex = 0;
     const tools = node('div', 'writing-tools'); const undo = button('ย้อนเส้น', '', undoHandwriting); undo.id = 'handwriting-undo'; const clear = button('ล้างแล้วลองใหม่', '', clearHandwriting); clear.id = 'handwriting-clear'; tools.append(undo, clear);
     panel.append(canvas, tools); if (activity.kind === 'connect' && !motorRequired) renderTapConnections(panel, activity);
     panel.append(status, actions, node('p', 'fine', motorRequired ? 'ค่อย ๆ เขียนหรือลากเส้นให้พร้อมก่อนยืนยัน รอยเขียนอยู่เฉพาะรอบนี้' : 'โหมดช่วย: ข้ามหรือใช้ปุ่มทางเลือกได้ รอยเขียนอยู่เฉพาะรอบนี้'));
-    const control = mountHandwritingCanvas(canvas, { activity, strokes: handwriting.strokes[handwriting.index], connections: handwriting.connections[handwriting.index], requireGesture: motorRequired, onChange: updateHandwritingStatus });
+    const control = mountHandwritingCanvas(canvas, { activity, strokes: handwriting.strokes[handwriting.index], connections: handwriting.connections[handwriting.index], requireGesture: motorRequired, smooth: () => smoothLines, color: () => pencilColor, onChange: updateHandwritingStatus });
     handwritingCanvas = control; cleanupDrawing = () => { control.cleanup(); if (handwritingCanvas === control) handwritingCanvas = null; }; updateHandwritingStatus(control.status());
   }
   focusHeading('handwriting-heading');
@@ -513,7 +555,7 @@ function renderParents() {
   learning.append(node('p', '', 'ลองช่วยต่อ: จัดของ 9 ชิ้นกับ 6 ชิ้น ชวนเด็กเติมให้ครบสิบ แล้วถามว่าส่วนที่เหลือมาจากไหน'), node('p', 'fine', 'ผลนี้แยกการทำเองจากการใช้ตัวช่วย การจบเรื่องเดียวไม่ใช่หลักฐาน mastery และไม่อ้างว่าพัฒนาการเกิดจากเกมแล้ว'));
   const contacts = node('section', 'parent-box'); contacts.append(node('h2', '', 'Math wizard by DR.Suwan'), node('p', '', 'เห็นวิธีคิดของลูก แล้วต่อยอดให้ตรงจุด'), node('p', 'fine', 'ลิงก์ต่อไปนี้ออกจากเกมเมื่อกด ไม่มีการส่งคำตอบหรือข้อมูลเด็กไปช่องทางเหล่านี้อัตโนมัติ'));
   const list = node('ul', 'contact-list'); CONTACTS.forEach(contact => { if (!/^(https?:|tel:|mailto:)/.test(contact.url)) return; const li = node('li'); const a = node('a', '', contact.label + ' ↗'); a.href = contact.url; if (contact.url.startsWith('http')) { a.target = '_blank'; a.rel = 'noopener noreferrer'; } li.append(a); list.append(li); }); contacts.append(list); columns.append(learning, contacts); panel.append(columns);
-  panel.append(node('p', 'fine', 'รุ่นนี้มีเกมฝึกมือชุดสั้น 14 และชุดใหญ่ 32 กิจกรรม เลือกฝึกเขียนตามรอยหรือเขียนเองอย่างละ 10 แบบ และเกมย่อยชนิดละ 4 แบบ โจทย์สุ่มฝึกและท้าทาย ป.1–4 และภารกิจทำสิบพร้อมภาพ/เขียนสำหรับ ป.1 หนึ่งเรื่อง ดาวฝึกมือให้จากการลงมือทำ ไม่อ่านลายมืออัตโนมัติหรือให้คะแนนความสวย รอยเขียนในเกมฝึกมือไม่เก็บถาวร ส่วนข้อมูลการเรียนและอันดับเก็บบนเบราว์เซอร์เมื่อรองรับ ไม่ซิงก์ข้ามเครื่อง และไม่ขอชื่อจริงเด็ก'));
+  panel.append(node('p', 'fine', 'รุ่นนี้มีเกมวาดรูปเรขาคณิตแบบตามรอย ดูแล้ววาด และวาดสร้างสรรค์ การวาดเองเป็นการฝึกมือ ไม่ใช่การตรวจว่ารูปถูกต้องอัตโนมัติ และมีเกมฝึกมือชุดสั้น 14 และชุดใหญ่ 32 กิจกรรม เลือกฝึกเขียนตามรอยหรือเขียนเองอย่างละ 10 แบบ และเกมย่อยชนิดละ 4 แบบ โจทย์สุ่มฝึกและท้าทาย ป.1–4 และภารกิจทำสิบพร้อมภาพ/เขียนสำหรับ ป.1 หนึ่งเรื่อง ดาวฝึกมือให้จากการลงมือทำ ไม่อ่านลายมืออัตโนมัติหรือให้คะแนนความสวย รอยเขียนในเกมฝึกมือไม่เก็บถาวร ส่วนข้อมูลการเรียนและอันดับเก็บบนเบราว์เซอร์เมื่อรองรับ ไม่ซิงก์ข้ามเครื่อง และไม่ขอชื่อจริงเด็ก'));
   const modeBox = node('section', 'parent-box motor-settings'); modeBox.append(node('h2', '', 'วิธีตอบในโหมดฝึก'));
   const toggle = button('ให้เขียน/ลากเส้นก่อนตอบ: ' + (motorRequired ? 'เปิด' : 'ปิด — ใช้วิธีช่วย'), 'button ' + (motorRequired ? 'primary' : 'outline'), () => setMotorRequired(!motorRequired)); toggle.id = 'motor-required-toggle'; toggle.setAttribute('role', 'switch'); toggle.setAttribute('aria-checked', String(motorRequired));
   modeBox.append(toggle, node('p', '', 'ค่าเริ่มต้นให้เด็กเขียนและลากเส้นก่อน แป้นตัวเลขใช้ยืนยันเลขที่เขียน โหมดท้าทายนับเวลารวมการเขียนและยืนยันเลข โดยแยกอันดับจากวิธีช่วยพิมพ์คำตอบ'));
@@ -525,12 +567,14 @@ function renderParents() {
 $('start-mission').addEventListener('click', () => { if (progress) { $('new-mission-confirm').hidden = false; $('confirm-new').focus(); } else startNewMission(); });
 $('confirm-new').addEventListener('click', startNewMission); $('cancel-new').addEventListener('click', () => { $('new-mission-confirm').hidden = true; });
 $('handwriting-home').addEventListener('click', goHome);
+document.querySelectorAll('[data-geometry-mode]').forEach(item => item.addEventListener('click', () => startGeometry(item.dataset.geometryMode)));
+$('smooth-toggle').addEventListener('click', () => setSmoothLines(!smoothLines));
 document.querySelectorAll('[data-workshop-mode]').forEach(item => item.addEventListener('click', () => startHandwriting(item.dataset.workshopMode)));
 $('resume-mission').addEventListener('click', resumeMission); $('start-practice').addEventListener('click', () => startPractice()); $('start-challenge').addEventListener('click', () => startChallenge());
 document.querySelectorAll('[data-grade]').forEach(item => item.addEventListener('click', () => selectGrade(Number(item.dataset.grade))));
 $('pause-mission').addEventListener('click', goHome); $('brand-home').addEventListener('click', goHome); $('leave-challenge').addEventListener('click', goHome); $('parents-home').addEventListener('click', goHome); $('open-parents').addEventListener('click', openParentGate);
 $('audio-toggle').addEventListener('click', () => { audio.setEnabled(!audio.isEnabled()); const enabled = audio.isEnabled(); $('audio-toggle').textContent = enabled ? 'เสียง: เปิด' : 'เสียง: ปิด'; $('audio-toggle').setAttribute('aria-pressed', String(enabled)); });
 window.addEventListener('beforeunload', () => { if (progress && view === 'learning') saveProgress(); audio.stop(); stopTimer(); });
-notice(initial); showView('home'); renderHome();
-export function getAppState() { return JSON.parse(JSON.stringify({ view, selectedGrade, motorRequired, guidedInk, progress, challenge, round: challenge, handwriting, workshop: handwriting })); }
-export const appActions = { setMotorRequired, confirmAnswerWriting, confirmPracticeWriting: () => confirmAnswerWriting('practice-' + challenge?.index), confirmGuidedWriting: () => confirmAnswerWriting('guided-' + (progress?.step === 'write' ? 'write' : fields[progress?.step])), startHandwriting, nextHandwritingActivity, skipHandwritingActivity, undoHandwriting, clearHandwriting, selectHandwritingLeft, connectHandwriting, moveHandwritingCoins, startNewMission, resumeMission, goHome, selectGrade, startPractice, startChallenge, requestPracticeHint, submitLearningAnswer, requestHint, moveLight, advanceLearning, markWritingAttempt, completeTrace, confirmWriting, skipWriting, submitChallengeAnswer, nextChallengeQuestion, openParentGate, renderParents };
+renderPencilPalette(); notice(initial); showView('home'); renderHome();
+export function getAppState() { return JSON.parse(JSON.stringify({ view, selectedGrade, motorRequired, smoothLines, pencilColor, guidedInk, progress, challenge, round: challenge, handwriting, workshop: handwriting })); }
+export const appActions = { startGeometry, setSmoothLines, setPencilColor, setMotorRequired, confirmAnswerWriting, confirmPracticeWriting: () => confirmAnswerWriting('practice-' + challenge?.index), confirmGuidedWriting: () => confirmAnswerWriting('guided-' + (progress?.step === 'write' ? 'write' : fields[progress?.step])), startHandwriting, nextHandwritingActivity, skipHandwritingActivity, undoHandwriting, clearHandwriting, selectHandwritingLeft, connectHandwriting, moveHandwritingCoins, startNewMission, resumeMission, goHome, selectGrade, startPractice, startChallenge, requestPracticeHint, submitLearningAnswer, requestHint, moveLight, advanceLearning, markWritingAttempt, completeTrace, confirmWriting, skipWriting, submitChallengeAnswer, nextChallengeQuestion, openParentGate, renderParents };
