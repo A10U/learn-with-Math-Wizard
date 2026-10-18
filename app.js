@@ -7,14 +7,18 @@ import { createHandwritingRound } from './lib/handwriting-content.js';
 import { GEOMETRY_SHAPES, geometryPaths, createGeometryRound } from './lib/geometry.js';
 import { mountHandwritingCanvas } from './lib/handwriting.js';
 import { PENCIL_COLORS } from './lib/drawing.js';
+import { createArcadeController, renderArcadeMenu } from './lib/arcade-ui.js';
+import { ARCADE_MODES } from './lib/arcade.js';
 
 const $ = id => document.getElementById(id);
 const store = createStore();
+const arcade = createArcadeController($('arcade-panel'), goHome);
 const audio = createAudio();
 const initial = store.readProgress();
 let progress = initial.data;
 let view = 'home';
 let selectedGrade = store.readGrade().data;
+let selectedPracticeTopic = null;
 let motorRequired = store.readMotorRequired().data;
 let smoothLines = true;
 let pencilColor = '#245f44';
@@ -42,7 +46,7 @@ function notice(result) { if (result?.message) $('storage-status').textContent =
 function saveProgress() { if (!progress) return; progress.updatedAt = Date.now(); const result = store.writeProgress(progress); notice(result); if (result.data) progress = result.data; }
 function stopTimer() { if (timer !== null) { clearInterval(timer); timer = null; } }
 function cancelChallenge() { stopTimer(); challenge = null; }
-function showView(next) { if (cleanupDrawing) { cleanupDrawing(); cleanupDrawing = null; } audio.stop(); activeAnswerMotor = null; activeTraceMotor = null; if (next !== 'parents') parentUnlocked = false; view = next; ['home', 'learning', 'challenge', 'handwriting', 'parents'].forEach(name => { $('view-' + name).hidden = name !== next; }); if (next !== 'handwriting') { handwriting = null; handwritingCanvas = null; } }
+function showView(next) { if (next !== 'arcade') arcade.deactivate(); if (cleanupDrawing) { cleanupDrawing(); cleanupDrawing = null; } audio.stop(); activeAnswerMotor = null; activeTraceMotor = null; if (next !== 'parents') parentUnlocked = false; view = next; ['home', 'learning', 'challenge', 'handwriting', 'arcade', 'parents'].forEach(name => { $('view-' + name).hidden = name !== next; }); if (next !== 'handwriting') { handwriting = null; handwritingCanvas = null; } }
 function formatTime(ms) { const seconds = Math.floor(ms / 1000); return String(Math.floor(seconds / 60)).padStart(2, '0') + ':' + String(seconds % 60).padStart(2, '0'); }
 function audioControls(text) {
   const row = node('div', 'audio-row'); const status = node('span', 'audio-note', 'มีข้อความให้อ่านเสมอ เสียงภาษาไทยขึ้นกับเครื่องที่ใช้');
@@ -55,19 +59,39 @@ function renderHome() {
   const profile = GRADE_PROFILES.find(item => item.grade === selectedGrade);
   document.querySelectorAll('[data-grade]').forEach(item => item.setAttribute('aria-pressed', String(Number(item.dataset.grade) === selectedGrade)));
   $('grade-profile-description').textContent = 'โจทย์คิดเลข ป.' + selectedGrade + ' · ' + profile.description;
+  const topicPicker = $('practice-topic'); topicPicker.replaceChildren();
+  const allTopics = node('option', '', 'รวมทุกหัวข้อ · คละ 5 ข้อ'); allTopics.value = ''; topicPicker.append(allTopics);
+  profile.topics.forEach(topic => { const option = node('option', '', topic); option.value = topic; topicPicker.append(option); });
+  topicPicker.value = selectedPracticeTopic || '';
+  $('home-math-heading').textContent = 'ฝึกคณิตศาสตร์ ป.' + selectedGrade;
+  $('home-arcade-heading').textContent = '10 เกมคณิตศาสตร์ · ป.' + selectedGrade;
+  $('start-practice').textContent = selectedPracticeTopic ? 'เริ่มฝึกหัวข้อนี้ →' : 'เริ่มฝึกโจทย์คละ →';
   $('home-grade-tag').textContent = 'พร้อมฝึก ป.' + selectedGrade;
   $('geometry-count').textContent = (selectedGrade <= 2 ? '6 รูป · สลับลากและวาด 12 กิจกรรม' : '8 รูป · สลับลากและวาด 16 กิจกรรม');
   $('home-scene-title').textContent = 'ประตูเวทคณิต ป.' + selectedGrade;
   $('home-challenge-label').textContent = 'ท้าทาย' + (motorRequired ? 'เขียน' : 'พิมพ์') + ' 5 ข้อ · ป.' + selectedGrade;
   $('motor-mode-note').textContent = motorRequired ? 'เขียน/ลากเส้นเป็นขั้นหลัก · แป้นตัวเลขใช้ยืนยันเลขที่เขียน' : 'ผู้ปกครองเปิดวิธีช่วย: ใช้แป้นตัวเลข ข้าม หรือแตะจับคู่แทนได้';
-  $('home-symbol').textContent = selectedGrade === 1 ? '+ −' : selectedGrade === 2 ? '× ÷' : '½ ¼';
+  $('home-symbol').textContent = selectedGrade === 1 ? '+ −' : selectedGrade === 2 ? '× ÷' : selectedGrade >= 5 ? '% ½' : '½ ¼';
+}
+function selectPracticeTopic(topic) {
+  const value = topic === '' ? null : topic;
+  if (value !== null && !GRADE_PROFILES.find(item => item.grade === selectedGrade).topics.includes(value)) return false;
+  selectedPracticeTopic = value; renderHome(); return true;
 }
 function selectGrade(grade) {
   const number = Number(grade); if (!GRADE_PROFILES.some(item => item.grade === number)) return false;
   if (progress && view === 'learning') saveProgress();
+  if (selectedGrade !== number) selectedPracticeTopic = null;
   selectedGrade = number; notice(store.writeGrade(number)); cancelChallenge(); showView('home'); renderHome(); return true;
 }
 function goHome() { if (progress && view === 'learning') saveProgress(); cancelChallenge(); showView('home'); renderHome(); focusHeading('home-heading'); }
+function startArcade(mode, grade = selectedGrade) {
+  if (!GRADE_PROFILES.some(profile => profile.grade === grade) || !ARCADE_MODES.some(game => game.id === mode)) return false;
+  if (progress && view === 'learning') saveProgress();
+  if (selectedGrade !== grade) selectedPracticeTopic = null;
+  arcade.start(grade, mode); selectedGrade = grade; notice(store.writeGrade(grade)); cancelChallenge(); showView('arcade');
+  const heading = $('arcade-panel').querySelector?.('h1'); if (heading) { heading.tabIndex = -1; heading.focus(); } return true;
+}
 function startNewMission() { cancelChallenge(); guidedInk = { base: newAnswerInk(), transfer: newAnswerInk(), trace: newAnswerInk(), write: newAnswerInk() }; progress = createLearningState(); saveProgress(); showView('learning'); renderLearning(); }
 function resumeMission() { if (!progress) return; cancelChallenge(); repairMotorCheckpoint(); showView('learning'); renderLearning(); }
 
@@ -271,12 +295,15 @@ function updateChallengeStats() {
   $('challenge-progress').textContent = challenge.answered + '/5';
   $('challenge-time').textContent = challenge.mode === 'challenge' ? formatTime(elapsed()) : 'ไม่จับเวลา';
 }
-function startRound(mode, grade = selectedGrade) {
+function startRound(mode, grade = selectedGrade, topic = null) {
   const number = Number.isInteger(grade) ? grade : selectedGrade;
-  if (!GRADE_PROFILES.some(item => item.grade === number)) return false;
+  const profile = GRADE_PROFILES.find(item => item.grade === number);
+  if (!profile || !['practice', 'challenge'].includes(mode) || (topic !== null && !profile.topics.includes(topic))) return false;
+  if (mode === 'challenge') topic = null;
+  if (number !== selectedGrade) selectedPracticeTopic = null;
   if (progress && view === 'learning') saveProgress(); cancelChallenge(); selectedGrade = number; notice(store.writeGrade(number));
   const recent = store.readRecent(number);
-  const deck = createQuestionRound(number, { excludeIds: recent.data });
+  const deck = createQuestionRound(number, { excludeIds: recent.data, topic });
   if (mode === 'challenge' && motorRequired) deck.deckVersion = WRITING_PROFILE_VERSION;
   const history = store.writeRecent(number, deck.questions.map(question => question.signature)); notice(history);
   challenge = { mode, motorRequired, grade: number, deck, questions: deck.questions, active: true, index: 0, answered: 0, correct: 0, locked: false, startedAt: Date.now(), elapsedMs: 0, feedback: '', saved: false, attempts: deck.questions.map(() => newAttempt()), hintLevels: [0,0,0,0,0], draft: '', scratchStrokes: deck.questions.map(() => []), scratchOpen: [true,true,true,true,true], justEarned: false, encouragement: 'ค่อย ๆ คิดทีละก้าว เราไปด้วยกัน!' };
@@ -286,7 +313,7 @@ function startRound(mode, grade = selectedGrade) {
   focusHeading('challenge-heading'); return true;
 }
 function startChallenge(grade = selectedGrade) { return startRound('challenge', grade); }
-function startPractice(grade = selectedGrade) { return startRound('practice', grade); }
+function startPractice(grade = selectedGrade, topic = grade === selectedGrade ? selectedPracticeTopic : null) { return startRound('practice', grade, topic); }
 function requestPracticeHint(draft) {
   if (!challenge?.active || challenge.mode !== 'practice' || challenge.locked) return false;
   if (typeof draft === 'string') challenge.draft = draft;
@@ -352,11 +379,41 @@ function renderScratchpad(panel, onGate = () => {}) {
   const surface = mountAnswerSurface(content, ink, { scope: 'practice-' + index, canvasId: 'practice-scratchpad-canvas', confirmId: 'practice-writing-confirm', onGate });
   details.addEventListener('toggle', () => { if (challenge !== round) return; round.scratchOpen[index] = details.open; if (details.open) surface.control.redraw(); });
 }
+function renderQuestionChart(panel, visual) {
+  const figure = node('figure', 'question-chart');
+  figure.append(node('figcaption', '', visual.type === 'pie' ? 'แผนภูมิรูปวงกลม' : 'กราฟเส้น'));
+  const svgNode = (tag, attributes = {}, text = '') => { const element = document.createElementNS('http://www.w3.org/2000/svg', tag); for (const [key, value] of Object.entries(attributes)) element.setAttribute(key, value); if (text) element.textContent = text; return element; };
+  const svg = svgNode('svg', { viewBox: '0 0 540 300', role: 'img', 'aria-label': visual.labels.map((label, index) => label + ' ' + visual.values[index] + ' ' + visual.unit).join(', ') });
+  const colors = ['#245f44', '#a63d70', '#a06a12', '#347ba4', '#7256a3'];
+  if (visual.type === 'pie') {
+    let start = -Math.PI / 2;
+    visual.values.forEach((value, index) => {
+      const end = start + value / 100 * Math.PI * 2;
+      const x = angle => 270 + Math.cos(angle) * 116, y = angle => 145 + Math.sin(angle) * 116;
+      svg.append(svgNode('path', { d: `M 270 145 L ${x(start)} ${y(start)} A 116 116 0 ${value > 50 ? 1 : 0} 1 ${x(end)} ${y(end)} Z`, fill: colors[index % colors.length], stroke: '#fffdf6', 'stroke-width': 3 }));
+      const middle = (start + end) / 2;
+      svg.append(svgNode('text', { x: 270 + Math.cos(middle) * 77, y: 151 + Math.sin(middle) * 77, fill: 'white', 'text-anchor': 'middle', 'font-size': 20 }, value + '%'));
+      start = end;
+    });
+  } else {
+    const maximum = Math.max(...visual.values, 1), top = Math.ceil(maximum / 10) * 10;
+    const x = index => 65 + index * 430 / Math.max(1, visual.values.length - 1), y = value => 240 - value / top * 190;
+    for (let tick = 0; tick <= 4; tick++) {
+      const value = top * tick / 4;
+      svg.append(svgNode('line', { x1: 65, y1: y(value), x2: 495, y2: y(value), stroke: '#d7e2ca' }), svgNode('text', { x: 53, y: y(value) + 5, 'text-anchor': 'end', fill: '#435340', 'font-size': 14 }, String(value)));
+    }
+    svg.append(svgNode('text', { x: 65, y: 26, fill: '#435340', 'font-size': 14 }, visual.unit), svgNode('polyline', { points: visual.values.map((value, index) => x(index) + ',' + y(value)).join(' '), fill: 'none', stroke: colors[0], 'stroke-width': 3 }));
+    visual.values.forEach((value, index) => svg.append(svgNode('circle', { cx: x(index), cy: y(value), r: 5, fill: colors[0] }), svgNode('text', { x: x(index), y: y(value) - 12, 'text-anchor': 'middle', fill: colors[0], 'font-size': 16 }, String(value)), svgNode('text', { x: x(index), y: 269, 'text-anchor': 'middle', fill: '#435340', 'font-size': 13 }, visual.labels[index])));
+  }
+  const legend = node('ul', 'chart-legend');
+  if (visual.type === 'pie') visual.labels.forEach((label, index) => { const item = node('li'); const swatch = node('span', 'chart-swatch'); swatch.style.backgroundColor = colors[index % colors.length]; swatch.setAttribute('aria-hidden', 'true'); item.append(swatch, node('span', '', label + ' ' + visual.values[index] + '%')); legend.append(item); });
+  figure.append(svg, legend); panel.append(figure);
+}
 function renderChallenge() {
   if (!challenge) return;
   if (cleanupDrawing) { cleanupDrawing(); cleanupDrawing = null; }
   const practice = challenge.mode === 'practice';
-  $('round-scope').textContent = 'ป.' + challenge.grade + ' · โจทย์สุ่มตามชั้น';
+  $('round-scope').textContent = 'ป.' + challenge.grade + ' · ' + (challenge.deck.topic || 'โจทย์คละทุกหัวข้อ');
   $('challenge-heading').textContent = practice ? (motorRequired ? 'เขียนก่อน แล้วค่อยยืนยันคำตอบ' : 'ลองคิดตามจังหวะของเรา') : motorRequired ? 'ท้าทายเขียนคำตอบ' : 'ท้าทายพิมพ์คำตอบ';
   $('round-rules').textContent = practice ? (motorRequired ? 'เขียนคำตอบก่อน · ไม่จับเวลา · ขอคำใบ้และลองใหม่ได้' : 'โหมดช่วย · เขียนหรือใช้แป้นตัวเลขได้ · ไม่จับเวลา') : motorRequired ? 'เวลาเดินขึ้นรวมการเขียน · เขียนก่อนยืนยัน · รับคำตอบครั้งเดียวต่อข้อ' : 'โหมดช่วยพิมพ์คำตอบ · เวลาเดินขึ้น ไม่มีหมดเวลา · รับคำตอบครั้งเดียวต่อข้อ';
   $('round-time-stat').hidden = practice; $('round-ranking').hidden = practice;
@@ -370,11 +427,12 @@ function renderChallenge() {
     if (practice) panel.append(node('p', '', 'ทำเองถูกครั้งแรกโดยไม่ใบ้ ' + independent + '/5'), node('p', 'fine', 'คำตอบครั้งแรกเก็บแยกจากการแก้ได้หลังลองใหม่ โหมดฝึกไม่บันทึกอันดับ'));
     else panel.append(node('p', '', 'เวลารวม ' + formatTime(challenge.elapsedMs)));
     panel.append(node('p', 'feedback', challenge.feedback));
-    const actions = node('div', 'lesson-actions'); actions.append(button('สุ่มชุดใหม่ ป.' + challenge.grade, 'button primary', () => startRound(challenge.mode, challenge.grade)), button('กลับไปเลือกชั้น', 'button outline', goHome));
+    const actions = node('div', 'lesson-actions'); actions.append(button('สุ่มชุดใหม่ ป.' + challenge.grade, 'button primary', () => startRound(challenge.mode, challenge.grade, challenge.deck.topic || null)), button('กลับไปเลือกชั้น', 'button outline', goHome));
     panel.append(actions, node('p', 'fine', 'ขอบคุณที่ลองคิดจนครบ! ชุดใหม่มีตัวเลขและสถานการณ์เปลี่ยนไป พักก่อนก็ได้')); heading.focus(); return;
   }
   const question = challenge.questions[challenge.index], heading = node('h2', 'challenge-question', question.prompt); heading.tabIndex = -1;
   panel.append(node('span', 'tiny-label', 'ข้อ ' + (challenge.index + 1) + ' / 5 · ' + question.topic), heading, audioControls(question.prompt));
+  if (question.visual) renderQuestionChart(panel, question.visual);
   const { form, input, submit } = numberForm(motorRequired ? 'เลขที่ฉันตั้งใจเขียน' : 'คำตอบ', '', 'challenge-answer', { fractions: !question.integerOnly });
   form.className += motorRequired || practice ? ' numeric-confirmation' : '';
   const gate = unlocked => { form.hidden = motorRequired && !unlocked && !challenge.locked; input.disabled = submit.disabled = challenge.locked || (motorRequired && !unlocked); };
@@ -382,7 +440,7 @@ function renderChallenge() {
   input.value = challenge.draft; gate(inkCanSubmit('practice-' + challenge.index, challenge.answerInk[challenge.index]));
   form.addEventListener('submit', event => { event.preventDefault(); const result = submitChallengeAnswer(input.value); if (!result.valid && challenge?.active && !challenge.locked) { status.textContent = result.reason === 'writing-required' ? 'เขียนคำตอบ แล้วกดยืนยันเลขที่เขียนก่อนนะ' : question.integerOnly ? 'พิมพ์จำนวนเต็มก่อน ยังไม่นับเป็นคำตอบ' : 'พิมพ์จำนวนหรือเศษส่วน เช่น 3/4 ตัวส่วนต้องไม่เป็นศูนย์ ยังไม่นับเป็นคำตอบ'; if (!result.reason) { input.setAttribute('aria-invalid', 'true'); input.focus(); } } });
   panel.append(form, status);
-  if (!question.integerOnly) panel.append(node('p', 'fine', motorRequired ? 'เขียนเศษส่วนหรือวิธีคิดก่อน แล้วใช้ / ยืนยันตัวเศษกับตัวส่วนได้' : 'พิมพ์เศษส่วนด้วย / หรือทศนิยมที่มีค่าเท่ากันได้ เช่น 3/4 = 0.75'));
+  if (!question.integerOnly) panel.append(node('p', 'fine', 'ตอบทศนิยมด้วยจุด เช่น 0.75 หรือเศษส่วนด้วย / เช่น 3/4 · จำนวนคละให้เปลี่ยนเป็นเศษเกิน เช่น 1 กับ 1/2 ตอบ 3/2'));
   if (practice) {
     const hint = button(challenge.hintLevels[challenge.index] ? 'เปิดคำใบ้แล้ว' : 'ขอคำใบ้', 'button hint-button compact', () => requestPracticeHint(input.value)); hint.disabled = challenge.locked || challenge.hintLevels[challenge.index] > 0; panel.append(hint);
     if (challenge.hintLevels[challenge.index]) panel.append(node('p', 'hint-box', question.hint));
@@ -555,7 +613,7 @@ function renderParents() {
   learning.append(node('p', '', 'ลองช่วยต่อ: จัดของ 9 ชิ้นกับ 6 ชิ้น ชวนเด็กเติมให้ครบสิบ แล้วถามว่าส่วนที่เหลือมาจากไหน'), node('p', 'fine', 'ผลนี้แยกการทำเองจากการใช้ตัวช่วย การจบเรื่องเดียวไม่ใช่หลักฐาน mastery และไม่อ้างว่าพัฒนาการเกิดจากเกมแล้ว'));
   const contacts = node('section', 'parent-box'); contacts.append(node('h2', '', 'Math wizard by DR.Suwan'), node('p', '', 'เห็นวิธีคิดของลูก แล้วต่อยอดให้ตรงจุด'), node('p', 'fine', 'ลิงก์ต่อไปนี้ออกจากเกมเมื่อกด ไม่มีการส่งคำตอบหรือข้อมูลเด็กไปช่องทางเหล่านี้อัตโนมัติ'));
   const list = node('ul', 'contact-list'); CONTACTS.forEach(contact => { if (!/^(https?:|tel:|mailto:)/.test(contact.url)) return; const li = node('li'); const a = node('a', '', contact.label + ' ↗'); a.href = contact.url; if (contact.url.startsWith('http')) { a.target = '_blank'; a.rel = 'noopener noreferrer'; } li.append(a); list.append(li); }); contacts.append(list); columns.append(learning, contacts); panel.append(columns);
-  panel.append(node('p', 'fine', 'รุ่นนี้มีเกมวาดรูปเรขาคณิตแบบตามรอย ดูแล้ววาด และวาดสร้างสรรค์ การวาดเองเป็นการฝึกมือ ไม่ใช่การตรวจว่ารูปถูกต้องอัตโนมัติ และมีเกมฝึกมือชุดสั้น 14 และชุดใหญ่ 32 กิจกรรม เลือกฝึกเขียนตามรอยหรือเขียนเองอย่างละ 10 แบบ และเกมย่อยชนิดละ 4 แบบ โจทย์สุ่มฝึกและท้าทาย ป.1–4 และภารกิจทำสิบพร้อมภาพ/เขียนสำหรับ ป.1 หนึ่งเรื่อง ดาวฝึกมือให้จากการลงมือทำ ไม่อ่านลายมืออัตโนมัติหรือให้คะแนนความสวย รอยเขียนในเกมฝึกมือไม่เก็บถาวร ส่วนข้อมูลการเรียนและอันดับเก็บบนเบราว์เซอร์เมื่อรองรับ ไม่ซิงก์ข้ามเครื่อง และไม่ขอชื่อจริงเด็ก'));
+  panel.append(node('p', 'fine', 'รุ่นนี้มีเกมวาดรูปเรขาคณิตแบบตามรอย ดูแล้ววาด และวาดสร้างสรรค์ การวาดเองเป็นการฝึกมือ ไม่ใช่การตรวจว่ารูปถูกต้องอัตโนมัติ และมีเกมฝึกมือชุดสั้น 14 และชุดใหญ่ 32 กิจกรรม เลือกฝึกเขียนตามรอยหรือเขียนเองอย่างละ 10 แบบ และเกมย่อยชนิดละ 4 แบบ โจทย์สุ่มฝึกและท้าทาย ป.1–6 เลือกฝึกเฉพาะหัวข้อได้ ป.5 เพิ่มเศษส่วน ทศนิยม ร้อยละ การวัดและอ่านข้อมูล ป.6 เพิ่ม ห.ร.ม./ค.ร.น. อัตราส่วน เรขาคณิตและแผนภูมิรูปวงกลม เป็นชุดฝึกที่คัดสรร ยังไม่ครอบคลุมทุกตัวชี้วัดของหลักสูตร และภารกิจทำสิบพร้อมภาพ/เขียนสำหรับ ป.1 หนึ่งเรื่อง ดาวฝึกมือให้จากการลงมือทำ ไม่อ่านลายมืออัตโนมัติหรือให้คะแนนความสวย รอยเขียนในเกมฝึกมือไม่เก็บถาวร ส่วนข้อมูลการเรียนและอันดับเก็บบนเบราว์เซอร์เมื่อรองรับ ไม่ซิงก์ข้ามเครื่อง และไม่ขอชื่อจริงเด็ก'));
   const modeBox = node('section', 'parent-box motor-settings'); modeBox.append(node('h2', '', 'วิธีตอบในโหมดฝึก'));
   const toggle = button('ให้เขียน/ลากเส้นก่อนตอบ: ' + (motorRequired ? 'เปิด' : 'ปิด — ใช้วิธีช่วย'), 'button ' + (motorRequired ? 'primary' : 'outline'), () => setMotorRequired(!motorRequired)); toggle.id = 'motor-required-toggle'; toggle.setAttribute('role', 'switch'); toggle.setAttribute('aria-checked', String(motorRequired));
   modeBox.append(toggle, node('p', '', 'ค่าเริ่มต้นให้เด็กเขียนและลากเส้นก่อน แป้นตัวเลขใช้ยืนยันเลขที่เขียน โหมดท้าทายนับเวลารวมการเขียนและยืนยันเลข โดยแยกอันดับจากวิธีช่วยพิมพ์คำตอบ'));
@@ -571,10 +629,11 @@ document.querySelectorAll('[data-geometry-mode]').forEach(item => item.addEventL
 $('smooth-toggle').addEventListener('click', () => setSmoothLines(!smoothLines));
 document.querySelectorAll('[data-workshop-mode]').forEach(item => item.addEventListener('click', () => startHandwriting(item.dataset.workshopMode)));
 $('resume-mission').addEventListener('click', resumeMission); $('start-practice').addEventListener('click', () => startPractice()); $('start-challenge').addEventListener('click', () => startChallenge());
+$('practice-topic').addEventListener('change', event => selectPracticeTopic(event.target.value));
 document.querySelectorAll('[data-grade]').forEach(item => item.addEventListener('click', () => selectGrade(Number(item.dataset.grade))));
 $('pause-mission').addEventListener('click', goHome); $('brand-home').addEventListener('click', goHome); $('leave-challenge').addEventListener('click', goHome); $('parents-home').addEventListener('click', goHome); $('open-parents').addEventListener('click', openParentGate);
 $('audio-toggle').addEventListener('click', () => { audio.setEnabled(!audio.isEnabled()); const enabled = audio.isEnabled(); $('audio-toggle').textContent = enabled ? 'เสียง: เปิด' : 'เสียง: ปิด'; $('audio-toggle').setAttribute('aria-pressed', String(enabled)); });
 window.addEventListener('beforeunload', () => { if (progress && view === 'learning') saveProgress(); audio.stop(); stopTimer(); });
-renderPencilPalette(); notice(initial); showView('home'); renderHome();
-export function getAppState() { return JSON.parse(JSON.stringify({ view, selectedGrade, motorRequired, smoothLines, pencilColor, guidedInk, progress, challenge, round: challenge, handwriting, workshop: handwriting })); }
-export const appActions = { startGeometry, setSmoothLines, setPencilColor, setMotorRequired, confirmAnswerWriting, confirmPracticeWriting: () => confirmAnswerWriting('practice-' + challenge?.index), confirmGuidedWriting: () => confirmAnswerWriting('guided-' + (progress?.step === 'write' ? 'write' : fields[progress?.step])), startHandwriting, nextHandwritingActivity, skipHandwritingActivity, undoHandwriting, clearHandwriting, selectHandwritingLeft, connectHandwriting, moveHandwritingCoins, startNewMission, resumeMission, goHome, selectGrade, startPractice, startChallenge, requestPracticeHint, submitLearningAnswer, requestHint, moveLight, advanceLearning, markWritingAttempt, completeTrace, confirmWriting, skipWriting, submitChallengeAnswer, nextChallengeQuestion, openParentGate, renderParents };
+renderArcadeMenu($('arcade-games'), startArcade); renderPencilPalette(); notice(initial); showView('home'); renderHome();
+export function getAppState() { return JSON.parse(JSON.stringify({ view, selectedGrade, selectedPracticeTopic, motorRequired, smoothLines, pencilColor, guidedInk, progress, challenge, round: challenge, handwriting, workshop: handwriting, arcade: arcade.getState() })); }
+export const appActions = { startArcade, arcade: arcade.actions, selectPracticeTopic, startGeometry, setSmoothLines, setPencilColor, setMotorRequired, confirmAnswerWriting, confirmPracticeWriting: () => confirmAnswerWriting('practice-' + challenge?.index), confirmGuidedWriting: () => confirmAnswerWriting('guided-' + (progress?.step === 'write' ? 'write' : fields[progress?.step])), startHandwriting, nextHandwritingActivity, skipHandwritingActivity, undoHandwriting, clearHandwriting, selectHandwritingLeft, connectHandwriting, moveHandwritingCoins, startNewMission, resumeMission, goHome, selectGrade, startPractice, startChallenge, requestPracticeHint, submitLearningAnswer, requestHint, moveLight, advanceLearning, markWritingAttempt, completeTrace, confirmWriting, skipWriting, submitChallengeAnswer, nextChallengeQuestion, openParentGate, renderParents };
