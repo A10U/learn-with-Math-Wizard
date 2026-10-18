@@ -37,3 +37,44 @@
 @media(max-width:700px){.arcade-game-card{padding:10px 9px;grid-template-columns:25px 1fr;min-height:95px}.arcade-game-card strong{font-size:12px}.arcade-game-card small{font-size:9px}.arcade-game-icon{font-size:24px}.arcade-card{padding:20px 15px;margin:16px auto}.arcade-question{font-size:21px}.arcade-option{font-size:19px;padding:10px;min-height:62px}.arcade-matching{gap:14px}.arcade-progress{font-size:12px}.arcade-options{gap:9px}}
 
 .language-picker{display:flex;gap:4px;margin-left:auto;padding:4px;border:1px solid #c5d3b8;border-radius:10px;background:#f1f5e9}.language-picker button{font:inherit;font-size:12px;min-height:42px;padding:7px 12px;color:var(--green);border:0;border-radius:7px;background:transparent}.language-picker button[aria-pressed="true"]{background:var(--green);color:#fff;font-weight:bold}.site-header{gap:16px;flex-wrap:wrap}:lang(en) .home-copy h1{font-size:43px;line-height:1.22}:lang(en) .arcade-game-card strong{line-height:1.4}:lang(en) .workshop-game-grid small,:lang(en) .geometry-game-grid small{line-height:1.5}@media(max-width:700px){.language-picker{margin-left:auto}:lang(en) .home-copy h1{font-size:34px}.header-actions{gap:15px}}
+
+/* The academy introduction closes the home page, after the game choices. */
+.institute-promo{grid-column:1/-1;order:4;min-width:0;margin-top:15px;border:1px solid var(--green);border-radius:16px;background:var(--deep);color:var(--cream);overflow:hidden}
+.institute-promo-banner{display:block;width:100%;height:auto;background:#fff}
+.institute-promo-gallery{padding:26px 30px 0}
+.institute-promo-gallery h3{color:var(--cream);font-size:18px;line-height:1.7;margin:0 0 14px}
+.institute-promo-photos{columns:2;column-gap:18px}
+.institute-promo-photos img{display:block;width:100%;height:auto;margin:0 0 18px;break-inside:avoid;border:1px solid #ffffff40;border-radius:10px;background:#fff}
+.institute-promo-photos .institute-promo-poster{column-span:all;margin-bottom:0}
+.institute-promo-body{display:grid;grid-template-columns:88px minmax(0,1fr) 210px;gap:24px;align-items:center;padding:30px}
+.institute-promo-logo{display:block;width:88px;height:88px;object-fit:contain;background:#fff;border:5px solid #fff;border-radius:50%}
+.institute-promo-label{display:block;color:var(--yellow);font-size:11px;font-weight:bold;letter-spacing:.04em;margin-bottom:9px}
+.institute-promo h2{font:bold clamp(27px,3vw,36px)/1.2 Georgia,serif;color:var(--cream);margin:0 0 13px}
+.institute-promo h2 small{display:block;font:14px/1.7 Tahoma,Arial,sans-serif;margin-top:6px;color:#e2ead8}
+.institute-promo-copy>p{font-size:17px;line-height:1.8;margin:0}
+.institute-promo-copy>.institute-promo-description{font-size:13px;line-height:1.9;color:#e2ead8;margin-top:8px}
+.institute-promo-contact .button{width:100%;background:var(--yellow);color:var(--deep);border-color:var(--yellow)}
+.institute-promo-contact .button:hover{background:#ffe393}
+.institute-promo-contact .button:focus-visible{outline:3px solid #fff;outline-offset:4px}
+.institute-promo-contact>p{font-size:12px;line-height:2;color:#e2ead8;text-align:center;margin:12px 0 0}
+@media(max-width:950px){.institute-promo-body{grid-template-columns:76px minmax(0,1fr);padding:25px}.institute-promo-logo{width:76px;height:76px}.institute-promo-contact{grid-column:2}.institute-promo-contact .button{width:auto}.institute-promo-contact>p{text-align:left}}
+@media(max-width:700px){.institute-promo{margin-top:7px}.institute-promo-body{grid-template-columns:1fr;gap:20px;padding:24px 21px}.institute-promo h2{font-size:32px}.institute-promo-label{font-size:10px}.institute-promo-copy>p{font-size:16px}.institute-promo-contact{grid-column:1}.institute-promo-contact .button{width:100%}.institute-promo-contact>p{text-align:center}}
+@media(max-width:700px){.institute-promo-gallery{padding:24px 21px 0}.institute-promo-gallery h3{font-size:17px}.institute-promo-photos{columns:1}.institute-promo-photos img{margin-bottom:14px}}
+
+.institute-contact-details{padding:28px 30px 30px;border-top:1px solid #ffffff30}
+.institute-contact-details h3{color:var(--cream);font-size:25px;line-height:1.6;margin:0 0 8px}
+.institute-contact-intro{color:#e2ead8;font-size:14px;line-height:1.9;margin:0 0 22px;max-width:780px}
+.institute-contact-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.institute-contact-grid.institute-contact-info{grid-template-columns:repeat(2,minmax(0,1fr));margin-top:14px}
+.institute-contact-card{display:flex;flex-direction:column;align-items:flex-start;gap:6px;min-width:0;padding:20px;background:var(--cream);border:1px solid #d7e1cd;border-radius:11px;color:var(--ink);text-decoration:none;overflow-wrap:anywhere}
+.institute-contact-card:hover{background:#edf3e5;border-color:var(--yellow)}
+.institute-contact-card:focus-visible{outline:3px solid var(--yellow);outline-offset:3px}
+.institute-contact-card.institute-contact-line{background:#e5f2df}
+.institute-contact-label{font-size:12px;line-height:1.7;color:var(--green);font-weight:bold}
+.institute-contact-card strong{font-size:17px;line-height:1.65}
+.institute-contact-description{font-size:12px;line-height:1.9;color:var(--text)}
+.institute-contact-action{display:block;font-size:12px;line-height:1.8;font-weight:bold;color:var(--green);padding-top:9px;margin-top:auto;text-decoration:underline;text-underline-offset:4px}
+.institute-contact-details h4{font-size:18px;color:var(--cream);line-height:1.7;margin:26px 0 13px}
+.institute-contact-tip{font-size:12px;line-height:1.9;color:#e2ead8;margin:21px 0 0}
+@media(max-width:950px){.institute-contact-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:700px){.institute-contact-details{padding:24px 21px}.institute-contact-details h3{font-size:23px}.institute-contact-intro{font-size:13px}.institute-contact-grid,.institute-contact-grid.institute-contact-info{grid-template-columns:1fr}.institute-contact-card{padding:18px}.institute-contact-details h4{font-size:17px}}
