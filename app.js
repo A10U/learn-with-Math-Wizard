@@ -9,12 +9,14 @@ import { mountHandwritingCanvas } from './lib/handwriting.js';
 import { PENCIL_COLORS } from './lib/drawing.js';
 import { createArcadeController, renderArcadeMenu } from './lib/arcade-ui.js';
 import { ARCADE_MODES } from './lib/arcade.js';
+import { createAdventureController } from './lib/adventure-ui.js';
 import { initializeLanguage, getLanguage, setLanguage, t, translateStatic } from './lib/i18n.js';
 
 const $ = id => document.getElementById(id);
 initializeLanguage();
 const store = createStore();
 const arcade = createArcadeController($('arcade-panel'), goHome);
+const adventure = createAdventureController($('adventure-panel'), goHome);
 const audio = createAudio();
 const initial = store.readProgress();
 let progress = initial.data;
@@ -50,7 +52,7 @@ function notice(result) { if (result?.message) { lastStorageMessage = result.mes
 function saveProgress() { if (!progress) return; progress.updatedAt = Date.now(); const result = store.writeProgress(progress); notice(result); if (result.data) progress = result.data; }
 function stopTimer() { if (timer !== null) { clearInterval(timer); timer = null; } }
 function cancelChallenge() { stopTimer(); challenge = null; }
-function showView(next) { if (next !== 'arcade') arcade.deactivate(); if (cleanupDrawing) { cleanupDrawing(); cleanupDrawing = null; } audio.stop(); activeAnswerMotor = null; activeTraceMotor = null; if (next !== 'parents') parentUnlocked = false; view = next; ['home', 'learning', 'challenge', 'handwriting', 'arcade', 'parents'].forEach(name => { $('view-' + name).hidden = name !== next; }); if (next !== 'handwriting') { handwriting = null; handwritingCanvas = null; } }
+function showView(next) { if (next !== 'arcade') arcade.deactivate(); if (next !== 'adventure') adventure.deactivate(); if (cleanupDrawing) { cleanupDrawing(); cleanupDrawing = null; } audio.stop(); activeAnswerMotor = null; activeTraceMotor = null; if (next !== 'parents') parentUnlocked = false; view = next; ['home', 'learning', 'challenge', 'handwriting', 'arcade', 'adventure', 'parents'].forEach(name => { $('view-' + name).hidden = name !== next; }); if (next !== 'handwriting') { handwriting = null; handwritingCanvas = null; } }
 function formatTime(ms) { const seconds = Math.floor(ms / 1000); return String(Math.floor(seconds / 60)).padStart(2, '0') + ':' + String(seconds % 60).padStart(2, '0'); }
 function audioControls(text) {
   const row = node('div', 'audio-row'); const status = node('span', 'audio-note', 'มีข้อความให้อ่านเสมอ เสียงภาษาไทยขึ้นกับเครื่องที่ใช้');
@@ -76,6 +78,11 @@ function renderHome() {
   $('home-challenge-label').textContent = t('ท้าทาย' + (motorRequired ? 'เขียน' : 'พิมพ์') + ' 5 ข้อ · ป.' + selectedGrade);
   $('motor-mode-note').textContent = t(motorRequired ? 'เขียน/ลากเส้นเป็นขั้นหลัก · แป้นตัวเลขใช้ยืนยันเลขที่เขียน' : 'ผู้ปกครองเปิดวิธีช่วย: ใช้แป้นตัวเลข ข้าม หรือแตะจับคู่แทนได้');
   $('home-symbol').textContent = t(selectedGrade === 1 ? '+ −' : selectedGrade === 2 ? '× ÷' : selectedGrade >= 5 ? '% ½' : '½ ¼');
+  const english = getLanguage() === 'en';
+  $('home-adventure-heading').textContent = english ? 'A new adventure awaits' : 'ออกเดินทางสู่โลกเวทมนตร์';
+  $('home-adventure-description').textContent = english ? 'Explore the forest: build a bridge, plan a route and meet the guardian.' : 'เดินป่า ต่อสะพาน วางแผนเส้นทาง และพบผู้พิทักษ์';
+  $('home-adventure-scope').textContent = english ? `Grade ${selectedGrade} · 5 stages · practice or 3-minute ranked run · local TOP 10` : `ป.${selectedGrade} · 5 ด่าน · ฝึกหรือจับเวลา 3 นาที · TOP 10 บนเครื่อง`;
+  $('start-adventure').textContent = english ? 'Enter the adventure world →' : 'เข้าสู่โลกผจญภัย →';
 }
 function selectPracticeTopic(topic) {
   const value = topic === '' ? null : topic;
@@ -114,6 +121,7 @@ function changeLanguage(language) {
   else if (view === 'challenge') { renderChallenge(); renderRanking(); }
   else if (view === 'handwriting') renderHandwriting();
   else if (view === 'arcade') arcade.setLanguage(language);
+  else if (view === 'adventure') adventure.setLanguage(language);
   else if (view === 'parents') { if (parentUnlocked) renderParents(); else openParentGate(); }
   for (const [id, value] of drafts) if (value !== undefined && $(id)) $(id).value = value;
   if (previousFocus && $(previousFocus)) $(previousFocus).focus();
@@ -132,6 +140,13 @@ function startArcade(mode, grade = selectedGrade) {
   if (selectedGrade !== grade) selectedPracticeTopic = null;
   arcade.start(grade, mode); selectedGrade = grade; notice(store.writeGrade(grade)); cancelChallenge(); showView('arcade');
   const heading = $('arcade-panel').querySelector?.('h1'); if (heading) { heading.tabIndex = -1; heading.focus(); } return true;
+}
+function startAdventure(grade = selectedGrade) {
+  if (!GRADE_PROFILES.some(profile => profile.grade === grade)) return false;
+  if (progress && view === 'learning') saveProgress();
+  if (selectedGrade !== grade) selectedPracticeTopic = null;
+  selectedGrade = grade; notice(store.writeGrade(grade)); cancelChallenge(); showView('adventure');
+  adventure.start(grade); return true;
 }
 function startNewMission() { cancelChallenge(); guidedChoices = {}; guidedInk = { base: newAnswerInk(), transfer: newAnswerInk(), trace: newAnswerInk(), write: newAnswerInk() }; progress = createLearningState(); saveProgress(); showView('learning'); renderLearning(); }
 function resumeMission() { if (!progress) return; cancelChallenge(); repairMotorCheckpoint(); showView('learning'); renderLearning(); }
@@ -666,6 +681,7 @@ function renderParents() {
 $('start-mission').addEventListener('click', () => { if (progress) { $('new-mission-confirm').hidden = false; $('confirm-new').focus(); } else startNewMission(); });
 $('confirm-new').addEventListener('click', startNewMission); $('cancel-new').addEventListener('click', () => { $('new-mission-confirm').hidden = true; });
 $('handwriting-home').addEventListener('click', goHome);
+$('start-adventure').addEventListener('click', () => startAdventure());
 document.querySelectorAll('[data-geometry-mode]').forEach(item => item.addEventListener('click', () => startGeometry(item.dataset.geometryMode)));
 $('smooth-toggle').addEventListener('click', () => setSmoothLines(!smoothLines));
 document.querySelectorAll('[data-workshop-mode]').forEach(item => item.addEventListener('click', () => startHandwriting(item.dataset.workshopMode)));
@@ -676,7 +692,7 @@ $('language-en').addEventListener('click', () => changeLanguage('en'));
 document.querySelectorAll('[data-grade]').forEach(item => item.addEventListener('click', () => selectGrade(Number(item.dataset.grade))));
 $('pause-mission').addEventListener('click', goHome); $('brand-home').addEventListener('click', goHome); $('leave-challenge').addEventListener('click', goHome); $('parents-home').addEventListener('click', goHome); $('open-parents').addEventListener('click', openParentGate);
 $('audio-toggle').addEventListener('click', () => { audio.setEnabled(!audio.isEnabled()); const enabled = audio.isEnabled(); $('audio-toggle').textContent = t(enabled ? 'เสียง: เปิด' : 'เสียง: ปิด'); $('audio-toggle').setAttribute('aria-pressed', String(enabled)); });
-window.addEventListener('beforeunload', () => { if (progress && view === 'learning') saveProgress(); audio.stop(); stopTimer(); });
+window.addEventListener('beforeunload', () => { if (progress && view === 'learning') saveProgress(); adventure.deactivate(); audio.stop(); stopTimer(); });
 refreshLanguageControls(); notice(initial); showView('home'); renderHome();
-export function getAppState() { return JSON.parse(JSON.stringify({ language: getLanguage(), view, selectedGrade, selectedPracticeTopic, motorRequired, smoothLines, pencilColor, guidedInk, progress, challenge, round: challenge, handwriting, workshop: handwriting, arcade: arcade.getState() })); }
-export const appActions = { setLanguage: changeLanguage, startArcade, arcade: arcade.actions, selectPracticeTopic, startGeometry, setSmoothLines, setPencilColor, setMotorRequired, confirmAnswerWriting, confirmPracticeWriting: () => confirmAnswerWriting('practice-' + challenge?.index), confirmGuidedWriting: () => confirmAnswerWriting('guided-' + (progress?.step === 'write' ? 'write' : fields[progress?.step])), startHandwriting, nextHandwritingActivity, skipHandwritingActivity, undoHandwriting, clearHandwriting, selectHandwritingLeft, connectHandwriting, moveHandwritingCoins, startNewMission, resumeMission, goHome, selectGrade, startPractice, startChallenge, requestPracticeHint, submitLearningAnswer, requestHint, moveLight, advanceLearning, markWritingAttempt, completeTrace, confirmWriting, skipWriting, submitChallengeAnswer, nextChallengeQuestion, openParentGate, renderParents };
+export function getAppState() { return JSON.parse(JSON.stringify({ language: getLanguage(), view, selectedGrade, selectedPracticeTopic, motorRequired, smoothLines, pencilColor, guidedInk, progress, challenge, round: challenge, handwriting, workshop: handwriting, arcade: arcade.getState(), adventure: adventure.getState() })); }
+export const appActions = { setLanguage: changeLanguage, startAdventure, adventure: adventure.actions, startArcade, arcade: arcade.actions, selectPracticeTopic, startGeometry, setSmoothLines, setPencilColor, setMotorRequired, confirmAnswerWriting, confirmPracticeWriting: () => confirmAnswerWriting('practice-' + challenge?.index), confirmGuidedWriting: () => confirmAnswerWriting('guided-' + (progress?.step === 'write' ? 'write' : fields[progress?.step])), startHandwriting, nextHandwritingActivity, skipHandwritingActivity, undoHandwriting, clearHandwriting, selectHandwritingLeft, connectHandwriting, moveHandwritingCoins, startNewMission, resumeMission, goHome, selectGrade, startPractice, startChallenge, requestPracticeHint, submitLearningAnswer, requestHint, moveLight, advanceLearning, markWritingAttempt, completeTrace, confirmWriting, skipWriting, submitChallengeAnswer, nextChallengeQuestion, openParentGate, renderParents };
