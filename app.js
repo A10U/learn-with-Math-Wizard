@@ -12,6 +12,7 @@ import { ARCADE_MODES } from './lib/arcade.js';
 import { createAdventureController } from './lib/adventure-ui.js';
 import { getCampaignInfo } from './lib/adventure.js';
 import { initializeLanguage, getLanguage, setLanguage, t, translateStatic } from './lib/i18n.js';
+import { trackGameStart, trackGameComplete } from './lib/analytics.js';
 
 const $ = id => document.getElementById(id);
 initializeLanguage();
@@ -150,8 +151,8 @@ function startAdventure(grade = selectedGrade, campaign = 'forest') {
   selectedGrade = grade; notice(store.writeGrade(grade)); cancelChallenge(); showView('adventure');
   return true;
 }
-function startNewMission() { cancelChallenge(); guidedChoices = {}; guidedInk = { base: newAnswerInk(), transfer: newAnswerInk(), trace: newAnswerInk(), write: newAnswerInk() }; progress = createLearningState(); saveProgress(); showView('learning'); renderLearning(); }
-function resumeMission() { if (!progress) return; cancelChallenge(); repairMotorCheckpoint(); showView('learning'); renderLearning(); }
+function startNewMission() { cancelChallenge(); guidedChoices = {}; guidedInk = { base: newAnswerInk(), transfer: newAnswerInk(), trace: newAnswerInk(), write: newAnswerInk() }; progress = createLearningState(); saveProgress(); showView('learning'); renderLearning(); trackGameStart('mission-make-ten'); }
+function resumeMission() { if (!progress) return; cancelChallenge(); repairMotorCheckpoint(); showView('learning'); renderLearning(); if (!progress.completed) trackGameStart('mission-make-ten'); }
 
 function repairMotorCheckpoint() {
   if (!motorRequired || !progress || progress.completed || steps.indexOf(progress.step) < steps.indexOf('write')) return;
@@ -227,7 +228,7 @@ function advanceLearning() {
   else if (current === 'equation' && progress.answers.equation.correct) progress.step = 'answer';
   else if (current === 'answer' && progress.answers.base.correct) progress.step = 'trace';
   else if (current === 'explain' && progress.answers.explanation.correct) progress.step = 'transfer';
-  else if (current === 'transfer' && progress.answers.transfer.correct) { progress.step = 'summary'; progress.completed = true; }
+  else if (current === 'transfer' && progress.answers.transfer.correct) { progress.step = 'summary'; progress.completed = true; trackGameComplete('mission-make-ten'); }
   else return false;
   saveProgress(); renderLearning(); return true;
 }
@@ -368,7 +369,7 @@ function startRound(mode, grade = selectedGrade, topic = null) {
   challenge.answerInk = deck.questions.map(() => newAnswerInk()); challenge.scratchStrokes = challenge.answerInk.map(ink => ink.strokes);
   showView('challenge'); renderChallenge(); renderRanking();
   if (mode === 'challenge') timer = setInterval(updateChallengeStats, 250);
-  focusHeading('challenge-heading'); return true;
+  focusHeading('challenge-heading'); trackGameStart(mode); return true;
 }
 function startChallenge(grade = selectedGrade) { return startRound('challenge', grade); }
 function startPractice(grade = selectedGrade, topic = grade === selectedGrade ? selectedPracticeTopic : null) { return startRound('practice', grade, topic); }
@@ -385,7 +386,7 @@ function finishRound() {
     const score = { deckId: deck.deckId, deckVersion: deck.deckVersion, grade: challenge.grade, total: 5, correct: challenge.correct, elapsedMs: challenge.elapsedMs, completedAt: Date.now() };
     const saved = store.writeScore(score); challenge.saved = true; $('score-storage-status').textContent = t(saved.message); renderRanking(saved.data);
   }
-  renderChallenge(); return true;
+  renderChallenge(); trackGameComplete(challenge.mode); return true;
 }
 function roundStars() { return challenge ? challenge.attempts.filter(attempt => challenge.mode === 'practice' ? attempt.correct : attempt.firstCorrect === true).length : 0; }
 function renderAdventure() {
@@ -524,7 +525,7 @@ function startHandwriting(mode = 'mixed', grade = selectedGrade) {
     while (cycle.some(kind => queues[kind].length > 0)) cycle.forEach(kind => { const activity = queues[kind].shift(); if (activity) activities.push(activity); });
   } else activities = generated.activities.filter(activity => activity.kind === mode);
   handwriting = { source: 'numbers', mode, grade: number, title: writingModes[mode], activities, index: 0, completed: false, completions: activities.map(() => false), skips: activities.map(() => false), strokes: activities.map(() => []), connections: activities.map(() => []), coinCounts: activities.map(activity => activity.kind === 'coins' ? activity.startCount : 0), selectedLeft: null, feedback: '' };
-  showView('handwriting'); renderHandwriting(); return true;
+  showView('handwriting'); renderHandwriting(); trackGameStart('workshop-' + mode); return true;
 }
 const geometryModes = { geometryMixed: 'สนุกกับรูปเรขาคณิต', geometryTrace: 'ลากตามรอยรูป', geometryCopy: 'ดูรูปแล้ววาดเอง', geometryCreative: 'วาดภาพสร้างสรรค์' };
 function startGeometry(mode = 'geometryMixed', grade = selectedGrade) {
@@ -533,7 +534,7 @@ function startGeometry(mode = 'geometryMixed', grade = selectedGrade) {
   const contentMode = { geometryMixed: 'mixed', geometryTrace: 'trace', geometryCopy: 'copy', geometryCreative: 'creative' }[mode];
   const { activities } = createGeometryRound(number, { mode: contentMode, language: getLanguage() });
   handwriting = { source: 'geometry', mode, grade: number, title: geometryModes[mode], activities, index: 0, completed: false, completions: activities.map(() => false), skips: activities.map(() => false), strokes: activities.map(() => []), connections: activities.map(() => []), coinCounts: activities.map(() => 0), selectedLeft: null, feedback: '' };
-  showView('handwriting'); renderHandwriting(); return true;
+  showView('handwriting'); renderHandwriting(); trackGameStart('workshop-' + mode); return true;
 }
 function renderPencilPalette() {
   const palette = $('pencil-colors'); palette.replaceChildren(); pencilButtons.length = 0;
@@ -574,7 +575,7 @@ function updateHandwritingStatus(status) {
 function advanceHandwriting(skip = false) {
   if (!handwriting || handwriting.completed || (skip && motorRequired) || (!skip && !handwritingReady())) return false;
   const index = handwriting.index; handwriting.skips[index] = skip; handwriting.completions[index] = !skip;
-  if (index === handwriting.activities.length - 1) handwriting.completed = true; else handwriting.index++;
+  if (index === handwriting.activities.length - 1) { handwriting.completed = true; trackGameComplete('workshop-' + handwriting.mode); } else handwriting.index++;
   handwriting.selectedLeft = null; handwriting.feedback = ''; renderHandwriting();
   if (!skip && audio.isEnabled() && audio.isAvailable()) audio.speak(t('เยี่ยมเลย ได้ฝึกมืออีกหนึ่งกิจกรรม'));
   return true;
