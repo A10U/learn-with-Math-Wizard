@@ -15,9 +15,11 @@ import { createMathSimulatorController } from './lib/math-simulator-ui.js';
 import { getCampaignInfo } from './lib/adventure.js';
 import { initializeLanguage, getLanguage, setLanguage, t, translateStatic } from './lib/i18n.js';
 import { trackGameStart, trackGameComplete } from './lib/analytics.js';
+import { createFontSizeController } from './lib/font-size.js';
 
 const $ = id => document.getElementById(id);
 initializeLanguage();
+const fontSize = createFontSizeController({ document });
 const store = createStore();
 const arcade = createArcadeController($('arcade-panel'), goHome);
 const adventure = createAdventureController($('adventure-panel'), goHome);
@@ -717,10 +719,13 @@ document.querySelectorAll('[data-grade]').forEach(item => item.addEventListener(
 $('pause-mission').addEventListener('click', goHome); $('brand-home').addEventListener('click', goHome); $('leave-challenge').addEventListener('click', goHome); $('parents-home').addEventListener('click', goHome); $('open-parents').addEventListener('click', openParentGate);
 $('audio-toggle').addEventListener('click', () => { audio.setEnabled(!audio.isEnabled()); const enabled = audio.isEnabled(); $('audio-toggle').textContent = t(enabled ? 'เสียง: เปิด' : 'เสียง: ปิด'); $('audio-toggle').setAttribute('aria-pressed', String(enabled)); });
 window.addEventListener('beforeunload', () => { if (progress && view === 'learning') saveProgress(); adventure.deactivate(); writingTables.deactivate(); mathSimulator.deactivate(); audio.stop(); stopTimer(); });
+fontSize.initialize();
 refreshLanguageControls(); notice(initial); showView('home'); renderHome();
-if (new URLSearchParams(window.location?.search || '').get('feature') === 'simulator') startMathSimulator();
-export function getAppState() { return JSON.parse(JSON.stringify({ language: getLanguage(), view, selectedGrade, selectedPracticeTopic, motorRequired, smoothLines, pencilColor, guidedInk, progress, challenge, round: challenge, handwriting, workshop: handwriting, arcade: arcade.getState(), adventure: adventure.getState(), writingTables: writingTables.state(), mathSimulator: mathSimulator.getState() })); }
-export const appActions = { setLanguage: changeLanguage, startMathSimulator, mathSimulator: mathSimulator.actions, startWritingTables, startAdventure, adventure: adventure.actions, startArcade, arcade: arcade.actions, selectPracticeTopic, startGeometry, setSmoothLines, setPencilColor, setMotorRequired, confirmAnswerWriting, confirmPracticeWriting: () => confirmAnswerWriting('practice-' + challenge?.index), confirmGuidedWriting: () => confirmAnswerWriting('guided-' + (progress?.step === 'write' ? 'write' : fields[progress?.step])), startHandwriting, nextHandwritingActivity, skipHandwritingActivity, undoHandwriting, clearHandwriting, selectHandwritingLeft, connectHandwriting, moveHandwritingCoins, startNewMission, resumeMission, goHome, selectGrade, startPractice, startChallenge, requestPracticeHint, submitLearningAnswer, requestHint, moveLight, advanceLearning, markWritingAttempt, completeTrace, confirmWriting, skipWriting, submitChallengeAnswer, nextChallengeQuestion, openParentGate, renderParents };
+const requestedFeature = new URLSearchParams(window.location?.search || '').get('feature');
+if (requestedFeature === 'simulator') startMathSimulator();
+else if (requestedFeature === 'writing-tables') startWritingTables();
+export function getAppState() { return JSON.parse(JSON.stringify({ language: getLanguage(), fontSizePercent: fontSize.getPercent(), view, selectedGrade, selectedPracticeTopic, motorRequired, smoothLines, pencilColor, guidedInk, progress, challenge, round: challenge, handwriting, workshop: handwriting, arcade: arcade.getState(), adventure: adventure.getState(), writingTables: writingTables.state(), mathSimulator: mathSimulator.getState() })); }
+export const appActions = { setLanguage: changeLanguage, setFontSize: fontSize.setPercent, startMathSimulator, mathSimulator: mathSimulator.actions, startWritingTables, startAdventure, adventure: adventure.actions, startArcade, arcade: arcade.actions, selectPracticeTopic, startGeometry, setSmoothLines, setPencilColor, setMotorRequired, confirmAnswerWriting, confirmPracticeWriting: () => confirmAnswerWriting('practice-' + challenge?.index), confirmGuidedWriting: () => confirmAnswerWriting('guided-' + (progress?.step === 'write' ? 'write' : fields[progress?.step])), startHandwriting, nextHandwritingActivity, skipHandwritingActivity, undoHandwriting, clearHandwriting, selectHandwritingLeft, connectHandwriting, moveHandwritingCoins, startNewMission, resumeMission, goHome, selectGrade, startPractice, startChallenge, requestPracticeHint, submitLearningAnswer, requestHint, moveLight, advanceLearning, markWritingAttempt, completeTrace, confirmWriting, skipWriting, submitChallengeAnswer, nextChallengeQuestion, openParentGate, renderParents };
 
 // Readable state/actions for local browser smoke checks.
 window.__mathWizard = { getAppState, appActions, state: getAppState, actions: appActions };
