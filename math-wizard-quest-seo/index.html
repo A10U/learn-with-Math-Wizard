@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#245f44">
+  <meta name="description" content="Math Wizard Quest เกมเขียนเลข ลากเส้น จับคู่ เติมเหรียญ และโจทย์สุ่ม ป.1–6 พร้อมผจญภัย 8 บท หอคอย 100 ชั้น ระบบปลดล็อก จับเวลาและอันดับบนเครื่อง">
+  <title>Math Wizard Quest — ผจญภัยคณิตศาสตร์ ป.1–6</title>
+  <link rel="canonical" href="https://a10u.github.io/learn-with-Math-Wizard/">
+  <link rel="icon" type="image/png" sizes="192x192" href="./assets/icon-192.png">
+  <link rel="icon" type="image/png" sizes="48x48" href="./assets/favicon-48.png">
+  <link rel="apple-touch-icon" href="./assets/apple-touch-icon.png">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Math Wizard Quest">
+  <meta property="og:locale" content="th_TH">
+  <meta property="og:url" content="https://a10u.github.io/learn-with-Math-Wizard/">
+  <meta property="og:title" content="Math Wizard Quest — เกมฝึกคิดเลข ป.1–6 เล่นฟรี ไม่ต้องสมัคร">
+  <meta property="og:description" content="เลือกชั้น ป.1–6 แล้วเล่นได้ทันที: 10 เกมคณิต โหมดผจญภัย ฝึกเขียนเลขด้วยนิ้ว สลับไทย/อังกฤษได้ โดยทีม Math Wizard by DR.Suwan">
+  <meta property="og:image" content="https://a10u.github.io/learn-with-Math-Wizard/assets/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Math Wizard Quest เกมฝึกคิดเลข ป.1–6 เล่นฟรี ไม่ต้องสมัคร">
+  <meta name="twitter:card" content="summary_large_image">
+  <!-- Google Search Console: วางแท็ก google-site-verification ที่ได้จาก Search Console ไว้บรรทัดนี้ -->
+  <link rel="stylesheet" href="./styles.css">
+  <link rel="stylesheet" href="./lib/adventure.css">
+  <link rel="stylesheet" href="./lib/math-simulator.css">
+  <script type="module" src="./app.js"></script>
+</head>
+<body>
+<a class="skip-link" href="#main-content"><span data-i18n-text="ข้ามไปเนื้อหา">ข้ามไปเนื้อหา</span></a>
+<div class="site-shell">
+<header class="site-header">
+  <button class="brand" id="brand-home" type="button" aria-label="Math Wizard กลับหน้าเริ่ม" data-i18n-aria-label="Math Wizard กลับหน้าเริ่ม">
+    <img src="./assets/logo.jpg" alt="" width="62" height="62">
+    <span><strong>Math Wizard</strong><small>QUEST · by DR.Suwan</small></span>
+  </button>
+  <div class="language-picker" role="group" aria-label="ภาษา / Language"><button type="button" id="language-th" lang="th" aria-pressed="true">ไทย</button><button type="button" id="language-en" lang="en" aria-pressed="false">English</button></div><nav class="header-actions" aria-label="เครื่องมือ" data-i18n-aria-label="เครื่องมือ"><button id="smooth-toggle" class="text-button" type="button" aria-pressed="true"><span data-i18n-text="เส้นนุ่ม: เปิด">เส้นนุ่ม: เปิด</span></button><button id="audio-toggle" class="text-button" type="button" aria-pressed="true"><span data-i18n-text="เสียง: เปิด">เสียง: เปิด</span></button><button id="open-parents" class="text-button" type="button"><span data-i18n-text="สำหรับผู้ปกครอง ↗">สำหรับผู้ปกครอง ↗</span></button></nav>
+</header>
+<section class="pencil-palette" aria-labelledby="pencil-palette-heading"><div class="pencil-palette-copy"><h2 id="pencil-palette-heading"><span data-i18n-text="ดินสอ 7 สี ✎">ดินสอ 7 สี ✎</span></h2><p id="pencil-selected" role="status" aria-live="polite"><span data-i18n-text="กำลังใช้สีเขียว">กำลังใช้สีเขียว</span></p></div><div id="pencil-colors" class="pencil-colors" role="group" aria-label="เลือกสีดินสอ" data-i18n-aria-label="เลือกสีดินสอ"></div></section>
+<p id="storage-status" class="storage-status" role="status" aria-live="polite"></p>
+<main id="main-content">
+  <section id="view-home" class="view home-view" aria-labelledby="home-heading">
+    <div class="home-copy"><span class="eyebrow"><span data-i18n-text="MATH WIZARD ACADEMY · ฝึกคิดในโลกตัวเลข">MATH WIZARD ACADEMY · ฝึกคิดในโลกตัวเลข</span></span><h1 id="home-heading" tabindex="-1"><span data-i18n-text="เวทมนตร์เริ่มที่">เวทมนตร์เริ่มที่</span><br><em><span data-i18n-text="วิธีคิดของเรา">วิธีคิดของเรา</span></em></h1><p class="home-lede"><span data-i18n-text="เลือกชั้นของเรา แล้วเขียน วาด ลากเส้น">เลือกชั้นของเรา แล้วเขียน วาด ลากเส้น</span><br><span data-i18n-text="เล่นได้หลายแบบ ตามจังหวะของเรา">เล่นได้หลายแบบ ตามจังหวะของเรา</span></p><div class="grade-picker" role="group" aria-label="เลือกระดับชั้น" data-i18n-aria-label="เลือกระดับชั้น"><button type="button" data-grade="1" aria-pressed="true" aria-controls="grade-profile-description"><span data-i18n-text="ป.1">ป.1</span></button><button type="button" data-grade="2" aria-pressed="false" aria-controls="grade-profile-description"><span data-i18n-text="ป.2">ป.2</span></button><button type="button" data-grade="3" aria-pressed="false" aria-controls="grade-profile-description"><span data-i18n-text="ป.3">ป.3</span></button><button type="button" data-grade="4" aria-pressed="false" aria-controls="grade-profile-description"><span data-i18n-text="ป.4">ป.4</span></button><button type="button" data-grade="5" aria-pressed="false" aria-controls="grade-profile-description"><span data-i18n-text="ป.5">ป.5</span></button><button type="button" data-grade="6" aria-pressed="false" aria-controls="grade-profile-description"><span data-i18n-text="ป.6">ป.6</span></button></div><p id="grade-profile-description" class="grade-profile" role="status" aria-live="polite"></p><p id="motor-mode-note" class="motor-mode-note"><span data-i18n-text="เขียน/ลากเส้นเป็นขั้นหลัก · แป้นตัวเลขใช้ยืนยันเลขที่เขียน">เขียน/ลากเส้นเป็นขั้นหลัก · แป้นตัวเลขใช้ยืนยันเลขที่เขียน</span></p><button type="button" class="math-simulator-entry" id="start-math-simulator"><span class="math-simulator-entry-icon" aria-hidden="true">✦</span><span><strong><span data-i18n-text="Math Simulator · ห้องทดลองเวทคณิต">Math Simulator · ห้องทดลองเวทคณิต</span></strong><small><span data-i18n-text="ปรับค่า จัดภาพ ทดลองแก้ภารกิจ · บวก ลบ คูณ หาร และอีกมากมาย">ปรับค่า จัดภาพ ทดลองแก้ภารกิจ · บวก ลบ คูณ หาร และอีกมากมาย</span></small></span><span aria-hidden="true">↗</span></button><button type="button" class="writing-table-entry" id="start-writing-tables"><span class="writing-table-entry-icon" aria-hidden="true">✎</span><span><strong><span data-i18n-text="สมุดเขียนตารางคณิต">สมุดเขียนตารางคณิต</span></strong><small><span data-i18n-text="บวก ลบ คูณ หาร เศษส่วน · เขียนตามเส้นประ">บวก ลบ คูณ หาร เศษส่วน · เขียนตามเส้นประ</span></small></span><span aria-hidden="true">→</span></button><section class="home-adventure-picker" aria-labelledby="home-adventure-heading"><span class="tiny-label">MATH WIZARD · ADVENTURE</span><h2 id="home-adventure-heading">8 เส้นทางผจญภัยโลกเวทมนตร์</h2><p id="home-adventure-description">ผ่านด่านเพื่อปลดล็อกบทใหม่ สำรวจหอคอย 100 ชั้น และไปถึงบทปราบจอมมาร</p><div class="home-actions"><button type="button" class="button primary" id="start-adventure">เข้าสู่โลกผจญภัย →</button></div><p class="fine" id="home-adventure-scope">ป.1 · 8 บท · 135 ด่าน · บันทึกจุดพัก · TOP 10 บนเครื่อง</p></section><section class="home-math-picker" aria-labelledby="home-math-heading"><span class="tiny-label"><span data-i18n-text="คิดเลข เข้าใจโจทย์">คิดเลข เข้าใจโจทย์</span></span><h2 id="home-math-heading"><span data-i18n-text="ฝึกคณิตศาสตร์ ป.1">ฝึกคณิตศาสตร์ ป.1</span></h2><label for="practice-topic"><span data-i18n-text="เลือกหัวข้อที่อยากฝึก">เลือกหัวข้อที่อยากฝึก</span></label><select id="practice-topic" aria-describedby="practice-scope-note"></select><div class="home-actions"><button type="button" class="button primary" id="start-practice"><span data-i18n-text="เริ่มฝึกโจทย์คละ →">เริ่มฝึกโจทย์คละ →</span></button></div><p class="soft-note"><span data-i18n-text="รอบละ 5 ข้อ · ไม่จับเวลา · ดูวิธีคิดและลองใหม่ได้">รอบละ 5 ข้อ · ไม่จับเวลา · ดูวิธีคิดและลองใหม่ได้</span></p><p class="fine" id="practice-scope-note"><span data-i18n-text="ชุดฝึกหัวข้อที่คัดสรรตามชั้น ป.1–ป.6">ชุดฝึกหัวข้อที่คัดสรรตามชั้น ป.1–ป.6</span></p></section><section class="home-arcade-picker" aria-labelledby="home-arcade-heading"><span class="tiny-label"><span data-i18n-text="เลือกเกมที่อยากเล่น">เลือกเกมที่อยากเล่น</span></span><h2 id="home-arcade-heading"><span data-i18n-text="10 เกมคณิตศาสตร์ · ป.1">10 เกมคณิตศาสตร์ · ป.1</span></h2><p class="fine"><span data-i18n-text="เลือกระดับชั้นด้านบน · เล่นรอบละ 5 ด่าน · แตะ เลือก เรียง และจับคู่ · ลองใหม่ได้">เลือกระดับชั้นด้านบน · เล่นรอบละ 5 ด่าน · แตะ เลือก เรียง และจับคู่ · ลองใหม่ได้</span></p><div id="arcade-games" class="arcade-games"></div></section><section class="home-geometry-picker" aria-labelledby="home-geometry-heading"><span class="tiny-label"><span data-i18n-text="วาดรูป สนุกกับเส้น">วาดรูป สนุกกับเส้น</span></span><h2 id="home-geometry-heading"><span data-i18n-text="โลกของรูปเรขาคณิต ◯ △ □">โลกของรูปเรขาคณิต ◯ △ □</span></h2><button type="button" class="geometry-main" data-geometry-mode="geometryMixed"><span class="geometry-motif" aria-hidden="true">◯ △<br>□ ◇</span><span><strong><span data-i18n-text="ลากเส้น แล้วลองวาดรูป">ลากเส้น แล้วลองวาดรูป</span></strong><small id="geometry-count"><span data-i18n-text="6 รูป · สลับลากและวาด 12 กิจกรรม">6 รูป · สลับลากและวาด 12 กิจกรรม</span></small></span><span aria-hidden="true">→</span></button><div class="geometry-game-grid" role="group" aria-label="เลือกเกมวาดรูป" data-i18n-aria-label="เลือกเกมวาดรูป"><button type="button" data-geometry-mode="geometryTrace"><span aria-hidden="true">◌</span><strong><span data-i18n-text="ลากตามรอยรูป">ลากตามรอยรูป</span></strong><small><span data-i18n-text="ตามเส้น กลับจุดเริ่ม">ตามเส้น กลับจุดเริ่ม</span></small></button><button type="button" data-geometry-mode="geometryCopy"><span aria-hidden="true">◇</span><strong><span data-i18n-text="ดูรูปแล้ววาดเอง">ดูรูปแล้ววาดเอง</span></strong><small><span data-i18n-text="ดูตัวอย่าง วาดในช่องว่าง">ดูตัวอย่าง วาดในช่องว่าง</span></small></button><button type="button" data-geometry-mode="geometryCreative"><span aria-hidden="true">✧</span><strong><span data-i18n-text="วาดภาพสร้างสรรค์">วาดภาพสร้างสรรค์</span></strong><small><span data-i18n-text="บ้าน จรวด หุ่นยนต์ และสวน">บ้าน จรวด หุ่นยนต์ และสวน</span></small></button></div></section><section class="home-game-picker" aria-labelledby="home-writing-heading"><h2 id="home-writing-heading"><span data-i18n-text="ฝึกเขียนเลข และเล่นกับเส้น ✎">ฝึกเขียนเลข และเล่นกับเส้น ✎</span></h2><button type="button" class="workshop-mixed" data-workshop-mode="mixed"><span class="workshop-game-icon" aria-hidden="true">✎</span><span><strong><span data-i18n-text="สวนสนุกฝึกมือ">สวนสนุกฝึกมือ</span></strong><small><span data-i18n-text="สลับเขียน ลากเส้น จับคู่ เติมเหรียญ · 14 กิจกรรม">สลับเขียน ลากเส้น จับคู่ เติมเหรียญ · 14 กิจกรรม</span></small></span><span aria-hidden="true">→</span></button><button type="button" class="workshop-long" data-workshop-mode="mixedLong"><strong><span data-i18n-text="ชุดใหญ่ 32 กิจกรรม">ชุดใหญ่ 32 กิจกรรม</span></strong><small><span data-i18n-text="เขียนเพิ่ม เล่นหลายแบบ · ค่อย ๆ ทำตามจังหวะ">เขียนเพิ่ม เล่นหลายแบบ · ค่อย ๆ ทำตามจังหวะ</span></small><span aria-hidden="true">↗</span></button><div class="workshop-game-grid" role="group" aria-label="เลือกเกมฝึกมือ" data-i18n-aria-label="เลือกเกมฝึกมือ"><button type="button" data-workshop-mode="trace"><span aria-hidden="true">〰</span><strong><span data-i18n-text="เขียนตามรอย">เขียนตามรอย</span></strong><small><span data-i18n-text="10 แบบ · ลากตามเลข">10 แบบ · ลากตามเลข</span></small></button><button type="button" data-workshop-mode="copy"><span aria-hidden="true">✎</span><strong><span data-i18n-text="เขียนเลขเอง">เขียนเลขเอง</span></strong><small><span data-i18n-text="10 แบบ · ดูแล้วลองเขียน">10 แบบ · ดูแล้วลองเขียน</span></small></button><button type="button" data-workshop-mode="path"><span aria-hidden="true">⌁</span><strong><span data-i18n-text="ลากเส้นตามทาง">ลากเส้นตามทาง</span></strong><small><span data-i18n-text="4 ทาง · ฝึกมือเบา ๆ">4 ทาง · ฝึกมือเบา ๆ</span></small></button><button type="button" data-workshop-mode="connect"><span aria-hidden="true">↔</span><strong><span data-i18n-text="ลากเส้นจับคู่">ลากเส้นจับคู่</span></strong><small><span data-i18n-text="4 เกม · ลากหรือแตะได้">4 เกม · ลากหรือแตะได้</span></small></button><button type="button" data-workshop-mode="coins"><span aria-hidden="true">●</span><strong><span data-i18n-text="เติมเหรียญให้ครบ">เติมเหรียญให้ครบ</span></strong><small><span data-i18n-text="4 เกม · แตะหรือลากเหรียญ">4 เกม · แตะหรือลากเหรียญ</span></small></button></div></section></div>
+    <div class="garden-scene" aria-label="สวนเวทมนตร์กับโคมแสง" data-i18n-aria-label="สวนเวทมนตร์กับโคมแสง"><div class="scene-tag" id="home-grade-tag"><span data-i18n-text="พร้อมฝึก ป.1">พร้อมฝึก ป.1</span></div><span class="scene-star star-one" aria-hidden="true">✦</span><span class="scene-star star-two" aria-hidden="true">✧</span><span class="scene-star star-three" aria-hidden="true">✦</span><div class="garden-sun" aria-hidden="true"></div><div class="garden-hill hill-back" aria-hidden="true"></div><div class="garden-hill hill-front" aria-hidden="true"></div><div class="wizard-hat" aria-hidden="true"><span>✦</span></div><div class="lantern" aria-hidden="true"><div class="lantern-handle"></div><div class="lantern-glow" id="home-symbol">+ −</div><div class="lantern-base"></div></div><div class="scene-caption"><span><span data-i18n-text="ชุดใหม่เมื่อเริ่มรอบ · 5 ข้อ">ชุดใหม่เมื่อเริ่มรอบ · 5 ข้อ</span></span><strong id="home-scene-title"><span data-i18n-text="ประตูเวทคณิต ป.1">ประตูเวทคณิต ป.1</span></strong></div></div>
+    <div class="home-bottom"><div class="guided-card"><span class="tiny-label"><span data-i18n-text="ภารกิจพร้อมภาพและฝึกเขียน · เฉพาะ ป.1">ภารกิจพร้อมภาพและฝึกเขียน · เฉพาะ ป.1</span></span><p><span data-i18n-text="ฟังเรื่อง จัดแสง และเรียนวิธีทำสิบ">ฟังเรื่อง จัดแสง และเรียนวิธีทำสิบ</span></p><div class="home-actions"><button type="button" class="button pale compact" id="start-mission"><span data-i18n-text="ภารกิจทำสิบ ป.1 →">ภารกิจทำสิบ ป.1 →</span></button><button type="button" class="button outline compact" id="resume-mission" hidden><span data-i18n-text="เรียนต่อภารกิจ ป.1">เรียนต่อภารกิจ ป.1</span></button></div><div id="new-mission-confirm" class="inline-confirm" hidden><p><span data-i18n-text="เริ่มภารกิจทำสิบใหม่จะเปลี่ยนความคืบหน้าเดิมบนเครื่องนี้ ต้องการเริ่มใหม่ไหม?">เริ่มภารกิจทำสิบใหม่จะเปลี่ยนความคืบหน้าเดิมบนเครื่องนี้ ต้องการเริ่มใหม่ไหม?</span></p><button type="button" class="button primary compact" id="confirm-new"><span data-i18n-text="เริ่มภารกิจใหม่">เริ่มภารกิจใหม่</span></button><button type="button" class="button pale compact" id="cancel-new"><span data-i18n-text="เก็บภารกิจเดิม">เก็บภารกิจเดิม</span></button></div></div><button type="button" class="challenge-card" id="start-challenge"><span class="challenge-icon" aria-hidden="true">✦</span><span><strong id="home-challenge-label"><span data-i18n-text="ท้าทาย 5 ข้อ · ป.1">ท้าทาย 5 ข้อ · ป.1</span></strong><small><span data-i18n-text="เวลาเดินขึ้น · แยกอันดับตามวิธีตอบและชั้น">เวลาเดินขึ้น · แยกอันดับตามวิธีตอบและชั้น</span></small></span><span aria-hidden="true">↗</span></button></div>
+    <section class="institute-promo" aria-labelledby="institute-promo-heading">
+      <img class="institute-promo-banner" src="./assets/institute-banner.webp" alt="ภาพประชาสัมพันธ์สถาบันสอนคณิตศาสตร์ Math Wizard พร้อมภาพผู้สอนและนักเรียน" data-i18n-aria-label="ภาพประชาสัมพันธ์สถาบันสอนคณิตศาสตร์ Math Wizard พร้อมภาพผู้สอนและนักเรียน" width="1920" height="770" loading="lazy" decoding="async">
+      <div class="institute-promo-gallery" role="group" aria-labelledby="institute-gallery-heading">
+        <h3 id="institute-gallery-heading"><span data-i18n-text="ภาพจาก Math Wizard">ภาพจาก Math Wizard</span></h3>
+        <div class="institute-promo-photos">
+          <img src="./assets/institute-gallery-1.webp" alt="ภาพผู้สอนกับนักเรียนสามคน ถือช่อดอกไม้และของที่ระลึก" data-i18n-aria-label="ภาพผู้สอนกับนักเรียนสามคน ถือช่อดอกไม้และของที่ระลึก" width="700" height="468" loading="lazy" decoding="async">
+          <img src="./assets/institute-gallery-2.webp" alt="ภาพผู้สอนกับนักเรียนสองคน สวมเหรียญและถือช่อดอกไม้" data-i18n-aria-label="ภาพผู้สอนกับนักเรียนสองคน สวมเหรียญและถือช่อดอกไม้" width="700" height="468" loading="lazy" decoding="async">
+          <img src="./assets/institute-teacher.webp" alt="ภาพผู้สอนและบรรยากาศห้องเรียน Math Wizard" data-i18n-aria-label="ภาพผู้สอนและบรรยากาศห้องเรียน Math Wizard" width="837" height="810" loading="lazy" decoding="async">
+          <img src="./assets/institute-students.png" alt="ภาพนักเรียนสวมเหรียญและถือช่อดอกไม้จากสื่อประชาสัมพันธ์ Math Wizard" data-i18n-aria-label="ภาพนักเรียนสวมเหรียญและถือช่อดอกไม้จากสื่อประชาสัมพันธ์ Math Wizard" width="1058" height="1184" loading="lazy" decoding="async">
+          <img src="./assets/institute-student-gold.jpg" alt="ภาพผู้สอนกับนักเรียน พร้อมข้อความเหรียญทอง TMO ในภาพ" data-i18n-aria-label="ภาพผู้สอนกับนักเรียน พร้อมข้อความเหรียญทอง TMO ในภาพ" width="1706" height="960" loading="lazy" decoding="async">
+          <img src="./assets/institute-student-bronze.png" alt="ภาพผู้สอนกับนักเรียน พร้อมข้อความเหรียญทองแดง TMO ในภาพ" data-i18n-aria-label="ภาพผู้สอนกับนักเรียน พร้อมข้อความเหรียญทองแดง TMO ในภาพ" width="1116" height="972" loading="lazy" decoding="async">
+          <img class="institute-promo-poster" src="./assets/institute-academy.png" alt="ภาพประชาสัมพันธ์ Math Wizard Academy ธีมพ่อมดคณิตศาสตร์" data-i18n-aria-label="ภาพประชาสัมพันธ์ Math Wizard Academy ธีมพ่อมดคณิตศาสตร์" width="1442" height="890" loading="lazy" decoding="async">
+        </div>
+      </div>
+      <div class="institute-promo-body">
+        <img class="institute-promo-logo" src="./assets/logo.jpg" alt="" width="88" height="88" loading="lazy" decoding="async">
+        <div class="institute-promo-copy">
+          <span class="institute-promo-label" data-i18n-text="รู้จักสถาบัน · สำหรับผู้ปกครอง">รู้จักสถาบัน · สำหรับผู้ปกครอง</span>
+          <h2 id="institute-promo-heading">Math Wizard <small>by DR.Suwan</small></h2>
+          <p data-i18n-text="ต่อยอดความสนุกกับตัวเลข สู่การเรียนรู้ที่เข้าใจ">ต่อยอดความสนุกกับตัวเลข สู่การเรียนรู้ที่เข้าใจ</p>
+          <p class="institute-promo-description" data-i18n-text="รู้จักสถาบันสอนคณิตศาสตร์ Math Wizard และพูดคุยเรื่องแนวทางเรียนของลูกผ่านช่องทางติดต่อของสถาบัน">รู้จักสถาบันสอนคณิตศาสตร์ Math Wizard และพูดคุยเรื่องแนวทางเรียนของลูกผ่านช่องทางติดต่อของสถาบัน</p>
+        </div>
+        <div class="institute-promo-contact">
+          <a class="button" id="contact-institute" href="https://www.mathwizardtutor.com/" target="_blank" rel="noopener noreferrer"><span data-i18n-text="ติดต่อสถาบัน ↗">ติดต่อสถาบัน ↗</span></a>
+          <p>LINE · wizardmath<br><span data-i18n-text="โทร. 081 852 4904">โทร. 081 852 4904</span></p>
+        </div>
+      </div>
+      <section class="institute-contact-details" aria-labelledby="institute-contact-heading">
+        <h3 id="institute-contact-heading"><span data-i18n-text="ติดต่อและติดตาม Math Wizard">ติดต่อและติดตาม Math Wizard</span></h3>
+        <p class="institute-contact-intro"><span data-i18n-text="สอบถามรายละเอียดการเรียน แนวทางเรียนของลูก และการเดินทาง เลือกช่องทางที่สะดวกได้เลย">สอบถามรายละเอียดการเรียน แนวทางเรียนของลูก และการเดินทาง เลือกช่องทางที่สะดวกได้เลย</span></p>
+        <div class="institute-contact-grid">
+          <a class="institute-contact-card institute-contact-line" href="https://line.me/ti/p/~wizardmath" target="_blank" rel="noopener noreferrer">
+            <span class="institute-contact-label">LINE</span><strong>wizardmath</strong>
+            <span class="institute-contact-description" data-i18n-text="สอบถามรายละเอียดการเรียนผ่านแชต">สอบถามรายละเอียดการเรียนผ่านแชต</span>
+            <span class="institute-contact-action" data-i18n-text="แชตทาง LINE ↗">แชตทาง LINE ↗</span>
+          </a>
+          <a class="institute-contact-card" href="tel:+66818524904">
+            <span class="institute-contact-label" data-i18n-text="โทรศัพท์">โทรศัพท์</span><strong>081 852 4904</strong>
+            <span class="institute-contact-description" data-i18n-text="โทรพูดคุยกับสถาบัน · +66 81 852 4904">โทรพูดคุยกับสถาบัน · +66 81 852 4904</span>
+            <span class="institute-contact-action" data-i18n-text="โทรหาสถาบัน ↗">โทรหาสถาบัน ↗</span>
+          </a>
+          <a class="institute-contact-card" href="mailto:wizardsuwan@gmail.com">
+            <span class="institute-contact-label" data-i18n-text="อีเมล">อีเมล</span><strong>wizardsuwan@gmail.com</strong>
+            <span class="institute-contact-description" data-i18n-text="ส่งคำถามและรายละเอียดที่ต้องการสอบถาม">ส่งคำถามและรายละเอียดที่ต้องการสอบถาม</span>
+            <span class="institute-contact-action" data-i18n-text="ส่งอีเมล ↗">ส่งอีเมล ↗</span>
+          </a>
+        </div>
+        <div class="institute-contact-grid institute-contact-info">
+          <a class="institute-contact-card" href="https://www.mathwizardtutor.com/" target="_blank" rel="noopener noreferrer">
+            <span class="institute-contact-label" data-i18n-text="เว็บไซต์สถาบัน">เว็บไซต์สถาบัน</span><strong>mathwizardtutor.com</strong>
+            <span class="institute-contact-description" data-i18n-text="รู้จักสถาบันและดูข้อมูลการเรียนเพิ่มเติม">รู้จักสถาบันและดูข้อมูลการเรียนเพิ่มเติม</span>
+            <span class="institute-contact-action" data-i18n-text="เปิดเว็บไซต์ ↗">เปิดเว็บไซต์ ↗</span>
+          </a>
+          <a class="institute-contact-card" href="https://maps.app.goo.gl/5kgQB1tS5SCjRWA16" target="_blank" rel="noopener noreferrer">
+            <span class="institute-contact-label" data-i18n-text="ที่ตั้งและการเดินทาง">ที่ตั้งและการเดินทาง</span><strong data-i18n-text="สถาบัน Math Wizard · พระรามที่ 4">สถาบัน Math Wizard · พระรามที่ 4</strong>
+            <span class="institute-contact-description" data-i18n-text="1109 ถนนพระรามที่ 4 แขวงวังใหม่ เขตปทุมวัน กรุงเทพมหานคร 10330">1109 ถนนพระรามที่ 4 แขวงวังใหม่ เขตปทุมวัน กรุงเทพมหานคร 10330</span>
+            <span class="institute-contact-action" data-i18n-text="เปิด Google Maps ↗">เปิด Google Maps ↗</span>
+          </a>
+        </div>
+        <h4><span data-i18n-text="ติดตามข่าวสารและวิดีโอจากสถาบัน">ติดตามข่าวสารและวิดีโอจากสถาบัน</span></h4>
+        <div class="institute-contact-grid">
+          <a class="institute-contact-card" href="https://www.facebook.com/profile.php?id=61585477977024" target="_blank" rel="noopener noreferrer">
+            <span class="institute-contact-label">Facebook</span><strong>Math wizard by DR.Suwan</strong>
+            <span class="institute-contact-description" data-i18n-text="ข่าวสารและกิจกรรมของสถาบัน">ข่าวสารและกิจกรรมของสถาบัน</span>
+            <span class="institute-contact-action" data-i18n-text="เปิด Facebook ↗">เปิด Facebook ↗</span>
+          </a>
+          <a class="institute-contact-card" href="https://www.youtube.com/@MathwizardbydrSuwan" target="_blank" rel="noopener noreferrer">
+            <span class="institute-contact-label">YouTube</span><strong>MathwizardByDR.Suwan</strong>
+            <span class="institute-contact-description">@MathwizardbydrSuwan</span>
+            <span class="institute-contact-action" data-i18n-text="เปิด YouTube ↗">เปิด YouTube ↗</span>
+          </a>
+          <a class="institute-contact-card" href="https://www.tiktok.com/@math.wizard.by.dr.suwan" target="_blank" rel="noopener noreferrer">
+            <span class="institute-contact-label">TikTok</span><strong>@math.wizard.by.dr.suwan</strong>
+            <span class="institute-contact-description" data-i18n-text="ติดตามคลิปสั้นจาก Math Wizard">ติดตามคลิปสั้นจาก Math Wizard</span>
+            <span class="institute-contact-action" data-i18n-text="เปิด TikTok ↗">เปิด TikTok ↗</span>
+          </a>
+        </div>
+        <p class="institute-contact-tip"><span data-i18n-text="ก่อนติดต่อ เตรียมระดับชั้นของลูกและหัวข้อที่อยากสอบถาม เพื่อให้พูดคุยรายละเอียดได้สะดวกขึ้น">ก่อนติดต่อ เตรียมระดับชั้นของลูกและหัวข้อที่อยากสอบถาม เพื่อให้พูดคุยรายละเอียดได้สะดวกขึ้น</span></p>
+      </section>
+    </section>
+  </section>
+  <section id="view-learning" class="view" aria-labelledby="step-title" hidden>
+    <div class="view-top"><div><span class="eyebrow"><span data-i18n-text="สวนรวมพลัง · เติมแสงให้สวน">สวนรวมพลัง · เติมแสงให้สวน</span></span><p class="step-position" id="step-position"></p></div><button type="button" id="pause-mission" class="button outline compact"><span data-i18n-text="พักก่อน">พักก่อน</span></button></div>
+    <div class="mission-track" id="mission-track" aria-label="ลำดับภารกิจ" data-i18n-aria-label="ลำดับภารกิจ"></div>
+    <div class="lesson-heading"><h1 id="step-title" tabindex="-1"></h1><p id="step-subtitle"></p></div>
+    <div id="learning-panel" class="learning-panel"></div>
+  </section>
+  <section id="view-challenge" class="view" aria-labelledby="challenge-heading" hidden>
+    <div class="view-top"><div><span class="eyebrow" id="round-scope"><span data-i18n-text="ป.1 · โจทย์สุ่ม">ป.1 · โจทย์สุ่ม</span></span><h1 id="challenge-heading" tabindex="-1"><span data-i18n-text="ลองคิดด้วยตัวเอง">ลองคิดด้วยตัวเอง</span></h1></div><button type="button" id="leave-challenge" class="button outline compact"><span data-i18n-text="กลับหน้าเริ่ม">กลับหน้าเริ่ม</span></button></div>
+    <p class="soft-note" id="round-rules"><span data-i18n-text="ไม่มีหมดเวลา · ไม่มีคำใบ้ก่อนตอบ · คำตอบแรกครั้งเดียวต่อข้อ">ไม่มีหมดเวลา · ไม่มีคำใบ้ก่อนตอบ · คำตอบแรกครั้งเดียวต่อข้อ</span></p>
+    <div class="round-adventure"><div class="mascot-message"><img src="./assets/logo.jpg" alt="" width="58" height="58"><p id="round-encouragement"><span data-i18n-text="ค่อย ๆ คิดทีละก้าว เราไปด้วยกัน!">ค่อย ๆ คิดทีละก้าว เราไปด้วยกัน!</span></p></div><div class="round-stars"><span aria-hidden="true">✦</span><div><small id="round-stars-label"><span data-i18n-text="ดาวที่คิดสำเร็จ">ดาวที่คิดสำเร็จ</span></small><strong id="round-stars-count">0 / 5</strong></div></div><ol class="adventure-path" id="round-path" aria-label="เส้นทางโจทย์ห้าจุด" data-i18n-aria-label="เส้นทางโจทย์ห้าจุด"></ol><p class="adventure-note" id="round-reward-rule"><span data-i18n-text="คิดสำเร็จได้ดาว ลองใหม่หรือใช้คำใบ้ก็ได้ · เดินครบ 5 จุดรับตราจบรอบ">คิดสำเร็จได้ดาว ลองใหม่หรือใช้คำใบ้ก็ได้ · เดินครบ 5 จุดรับตราจบรอบ</span></p></div>
+    <div class="challenge-layout" id="round-layout"><div><div class="score-strip"><div><small id="round-accuracy-label"><span data-i18n-text="ถูกครั้งแรก">ถูกครั้งแรก</span></small><strong id="challenge-accuracy">—</strong></div><div><small><span data-i18n-text="ตอบแล้ว">ตอบแล้ว</span></small><strong id="challenge-progress">0/5</strong></div><div id="round-time-stat"><small><span data-i18n-text="เวลาที่ใช้">เวลาที่ใช้</span></small><strong id="challenge-time" role="timer" aria-live="off">00:00</strong></div></div><div id="challenge-panel" class="learning-panel"></div></div><aside class="ranking-panel" id="round-ranking"><span class="tiny-label">LOCAL LEADERBOARD</span><h2><span data-i18n-text="อันดับบนเครื่องนี้">อันดับบนเครื่องนี้</span></h2><p class="fine" id="ranking-scope"></p><p class="fine"><span data-i18n-text="โจทย์แต่ละรอบอาจยากต่างกัน ใช้ดูสถิติการเล่นของตัวเอง">โจทย์แต่ละรอบอาจยากต่างกัน ใช้ดูสถิติการเล่นของตัวเอง</span></p><p class="fine"><span data-i18n-text="ถูกมากก่อน แล้วเวลาน้อยก่อน">ถูกมากก่อน แล้วเวลาน้อยก่อน</span><br><span data-i18n-text="คะแนนและเวลาเท่ากันได้อันดับร่วม">คะแนนและเวลาเท่ากันได้อันดับร่วม</span></p><ol id="ranking-list" class="ranking-list"></ol><p id="score-storage-status" class="fine" role="status"></p><p class="fine"><span data-i18n-text="ชื่อสมมติอัตโนมัติ · เฉพาะเบราว์เซอร์นี้">ชื่อสมมติอัตโนมัติ · เฉพาะเบราว์เซอร์นี้</span><br><span data-i18n-text="ไม่รวมคะแนนจากเครื่องอื่น">ไม่รวมคะแนนจากเครื่องอื่น</span></p></aside></div>
+  </section>
+  <section id="view-handwriting" class="view handwriting-view" aria-labelledby="handwriting-heading" hidden>
+    <div class="view-top"><div><span class="eyebrow" id="handwriting-scope"><span data-i18n-text="สวนสนุกฝึกมือ">สวนสนุกฝึกมือ</span></span><h1 id="handwriting-heading" tabindex="-1"><span data-i18n-text="มาเล่นเขียนกัน">มาเล่นเขียนกัน</span></h1></div><button type="button" class="button outline compact" id="handwriting-home"><span data-i18n-text="กลับหน้าเริ่ม">กลับหน้าเริ่ม</span></button></div>
+    <div class="workshop-progress"><p id="handwriting-progress" role="status"></p><div class="workshop-stars"><span aria-hidden="true">✦</span><span><span data-i18n-text="ดาวการลงมือทำ">ดาวการลงมือทำ</span> <strong id="handwriting-stars">0</strong></span></div></div>
+    <div class="workshop-progress-track" aria-hidden="true"><span id="handwriting-progress-fill"></span></div>
+    <div id="handwriting-panel" class="learning-panel handwriting-panel"></div>
+  </section>
+  <section id="view-math-simulator" class="view math-simulator-view" aria-label="ห้องทดลองเวทคณิต" data-i18n-aria-label="ห้องทดลองเวทคณิต" hidden><div id="math-simulator-panel"></div></section>
+  <section id="view-writing-tables" class="view writing-tables-view" aria-label="สมุดเขียนตารางคณิต" data-i18n-aria-label="สมุดเขียนตารางคณิต" hidden><div id="writing-tables-panel"></div></section>
+  <section id="view-adventure" class="view adventure-view" aria-label="Math Wizard Adventure" hidden><div id="adventure-panel"></div></section>
+  <section id="view-arcade" class="view arcade-view" aria-label="เกมคณิตศาสตร์" hidden data-i18n-aria-label="เกมคณิตศาสตร์"><div id="arcade-panel"></div></section>
+  <section id="view-parents" class="view parent-view" aria-labelledby="parent-heading" hidden><div class="view-top"><div><span class="eyebrow"><span data-i18n-text="MATH WIZARD · สำหรับผู้ปกครอง">MATH WIZARD · สำหรับผู้ปกครอง</span></span><h1 id="parent-heading" tabindex="-1"><span data-i18n-text="มองเห็นวิธีคิด แล้วช่วยให้ตรงจุด">มองเห็นวิธีคิด แล้วช่วยให้ตรงจุด</span></h1></div><button type="button" class="button outline compact" id="parents-home"><span data-i18n-text="กลับหน้าเริ่ม">กลับหน้าเริ่ม</span></button></div><div id="parent-panel"></div></section>
+</main>
+<footer class="site-footer"><span><span data-i18n-text="เล่นให้เข้าใจ คิดได้หลายทาง เล่าเหตุผลได้">เล่นให้เข้าใจ คิดได้หลายทาง เล่าเหตุผลได้</span></span><span><span data-i18n-text="ฝึกเขียน เล่นเส้น ฝึกคิด ป.1–6">ฝึกเขียน เล่นเส้น ฝึกคิด ป.1–6</span></span></footer>
+</div>
+<noscript><p class="noscript"><span data-i18n-text="เกมนี้ใช้ JavaScript เพื่อรับคำตอบและแสดงภารกิจ กรุณาเปิด JavaScript แล้วโหลดหน้าใหม่">เกมนี้ใช้ JavaScript เพื่อรับคำตอบและแสดงภารกิจ กรุณาเปิด JavaScript แล้วโหลดหน้าใหม่</span></p></noscript>
+<script id="goatcounter-script" data-goatcounter="https://learnmathwizard.goatcounter.com/count"
+        async src="https://gc.zgo.at/count.js"></script>
+</body>
+</html>
