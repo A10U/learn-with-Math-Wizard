@@ -1,0 +1,12 @@
+.question-data-visual{margin:18px 0 24px;padding:15px;max-width:680px;box-sizing:border-box;border:1px solid #d5e1c8;border-radius:14px;background:#fffdf6;color:#263f35;font-size:calc(14px * var(--mw-font-scale,1));line-height:1.55}
+.question-data-visual>figcaption{margin:0 0 10px;font-weight:700;font-size:calc(16px * var(--mw-font-scale,1));color:#255d41}
+.question-data-chart-scroll,.question-data-table-scroll{max-width:100%;overflow-x:auto;overscroll-behavior-x:contain}
+.question-data-bar{display:block;width:100%;min-width:0;height:auto;font-family:inherit}
+.question-data-grid{stroke:#d9e3d3;stroke-width:1}.question-data-axis{fill:#52614c;font-size:14px}.question-data-label{fill:#263f35;font-size:16px}.question-data-value{fill:#20563c;font-size:16px;font-weight:700}.question-data-bar-fill{fill:#377b55}
+.question-data-table{width:100%;border-collapse:collapse;font-size:inherit;background:#fffef9}
+.question-data-table caption{text-align:left;padding:6px 10px;font-size:calc(12px * var(--mw-font-scale,1));color:#53624d}
+.question-data-table th,.question-data-table td{padding:10px 12px;border-bottom:1px solid #dbe4d3;white-space:nowrap}
+.question-data-table th{text-align:left;font-weight:700}.question-data-table thead{background:#edf3e5}.question-data-table td{text-align:right;font-variant-numeric:tabular-nums}
+.question-data-alternative{margin-top:12px}.question-data-alternative summary{width:fit-content;padding:5px 0;color:#255d41;font-weight:700;cursor:pointer}.question-data-alternative[open] summary{margin-bottom:8px}
+.question-data-key{margin:6px 0 12px;padding:8px 12px;border-radius:8px;background:#fff2c7;font-weight:700}.question-data-pictograph td{text-align:left;white-space:normal}.question-data-pictograph th{vertical-align:middle}.question-data-symbols{display:flex;flex-wrap:wrap;align-items:center;gap:5px;min-width:100px}.question-data-symbol{display:inline-block;color:#377b55;font-size:calc(24px * var(--mw-font-scale,1));line-height:1.15}.question-data-zero{padding:0 5px}
+@media(max-width:600px){.question-data-visual{margin:14px 0 20px;padding:10px}.question-data-table th,.question-data-table td{padding:8px 10px}.question-data-symbols{gap:4px}}

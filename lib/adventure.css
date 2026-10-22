@@ -12,7 +12,7 @@
 @media(max-width:520px){.home-adventure-picker{padding:18px}.adventure-app .adv-top{gap:12px;align-items:flex-start;margin-bottom:20px}.adventure-app .adv-top-title{font-size:calc(1.3rem * var(--mw-font-scale,1))}.adventure-app .adv-top>.adv-button{font-size:calc(.72rem * var(--mw-font-scale,1));padding:9px 12px;min-height:44px}.adventure-app .adv-eyebrow{font-size:calc(.6rem * var(--mw-font-scale,1));letter-spacing:.06em}.adventure-app .adv-hero{grid-template-columns:1fr;padding:22px 20px}.adventure-app .adv-forest-scene{height:156px;min-height:156px;border-radius:55px 55px 18px 18px}.adventure-app .adv-scene-tree-a{left:15%;bottom:2px}.adventure-app .adv-scene-tree-b{right:9%;bottom:2px}.adventure-app .adv-scene-tree-c{left:42%;top:18px;font-size:calc(72px * var(--mw-font-scale,1))}.adventure-app .adv-scene-trail{height:115px;bottom:-55px;left:45%}.adventure-app .adv-scene-wizard{font-size:calc(53px * var(--mw-font-scale,1));bottom:12px;left:45%}.adventure-app .adv-scene-moon{left:19%;top:12px}.adventure-app .adv-scene-bird{right:20%;font-size:calc(44px * var(--mw-font-scale,1))}.adventure-app .adv-mode-grid{grid-template-columns:1fr;gap:14px}.adventure-app .adv-mode-card{padding:22px}.adventure-app .adv-forest-map{padding-top:21px}.adventure-app .adv-forest-map:before{top:38px}.adventure-app .adv-map-number{height:34px;width:34px;font-size:calc(.78rem * var(--mw-font-scale,1))}.adventure-app .adv-map-name{font-size:calc(.61rem * var(--mw-font-scale,1))}.adventure-app .adv-map-stop{padding:0 3px}.adventure-app .adv-stage-card{padding:22px 18px}.adventure-app .adv-stage-prompt{font-size:calc(1rem * var(--mw-font-scale,1))}.adventure-app .adv-options{gap:10px}.adventure-app .adv-option{padding:13px 10px;font-size:calc(.93rem * var(--mw-font-scale,1));min-height:60px}.adventure-app .adv-waypoint-options{gap:8px}.adventure-app .adv-waypoint-options .adv-option{font-size:calc(.77rem * var(--mw-font-scale,1));min-height:64px}.adventure-app .adv-route-sequence{gap:5px}.adventure-app .adv-route-sequence li{font-size:calc(.62rem * var(--mw-font-scale,1));padding:8px 3px;min-width:0;overflow-wrap:anywhere}.adventure-app .adv-edge-list{grid-template-columns:1fr}.adventure-app .adv-edge-list li{font-size:calc(.73rem * var(--mw-font-scale,1))}.adventure-app .adv-route-map{padding:14px}.adventure-app .adv-route-total{font-size:calc(.74rem * var(--mw-font-scale,1))}.adventure-app .adv-run-status{flex-wrap:wrap;gap:8px}.adventure-app .adv-stage-count{font-size:calc(.73rem * var(--mw-font-scale,1))}.adventure-app .adv-clock{margin-left:auto}.adventure-app .adv-clock>span{font-size:calc(.65rem * var(--mw-font-scale,1))}.adventure-app .adv-clock strong{font-size:calc(1.25rem * var(--mw-font-scale,1));min-width:56px;padding:4px 5px}.adventure-app .adv-stage-actions{gap:10px}.adventure-app .adv-stage-actions .adv-button{flex:1;min-width:130px}.adventure-app .adv-ranks{padding:21px 17px}.adventure-app .adv-rank-row{gap:10px}.adventure-app .adv-rank-number{min-width:27px;font-size:calc(.8rem * var(--mw-font-scale,1))}.adventure-app .adv-rank-name strong{font-size:calc(.85rem * var(--mw-font-scale,1))}.adventure-app .adv-complete{padding:28px 19px}.adventure-app .adv-result-stats{gap:8px}.adventure-app .adv-result-stats>div{padding:14px 5px}.adventure-app .adv-result-stats strong{font-size:calc(1.5rem * var(--mw-font-scale,1))}.adventure-app .adv-result-stats span{font-size:calc(.65rem * var(--mw-font-scale,1))}.adventure-app .adv-complete>p{font-size:calc(.84rem * var(--mw-font-scale,1))}.adventure-app .adv-stone-options{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(prefers-reduced-motion:reduce){.adventure-app *{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 
-/* Eight campaign atlas, tower checkpoints and campaign-specific interactions. */
+/* Campaign atlas, chapter checkpoints and campaign-specific interactions. */
 .adventure-app.adv-theme-cave{--adv-green:#204f61;--adv-ink:#193e4e;--adv-muted:#526d76;--adv-mint:#e2eef0;--adv-line:#bed0d4;--adv-gold:#ead179}
 .adventure-app.adv-theme-ruins{--adv-green:#6b502d;--adv-ink:#4b3d2b;--adv-muted:#756953;--adv-mint:#f0e9d8;--adv-line:#d7cbb3;--adv-gold:#efd177}
 .adventure-app.adv-theme-castle{--adv-green:#504269;--adv-ink:#3f3650;--adv-muted:#70637d;--adv-mint:#ece6f2;--adv-line:#cec5d8;--adv-gold:#f0d175}
@@ -45,3 +45,121 @@
   :root:is([data-font-scale="150"],[data-font-scale="175"],[data-font-scale="200"]) .adventure-app .adv-rank-value{text-align:left}
   :root:is([data-font-scale="150"],[data-font-scale="175"],[data-font-scale="200"]) .adventure-app .adv-clock{margin-left:0}
 }
+
+/* The Silent Moon Maze keeps its sealed controls visible in every stage. */
+.adventure-app.adv-theme-moon-maze{--adv-green:#484078;--adv-ink:#302a50;--adv-muted:#665f7d;--adv-mint:#eeebf8;--adv-line:#cdc7e2;--adv-gold:#c7d4ff;--adv-paper:#fcfbff}
+.adventure-app .adv-chapter-seal{display:block;font-size:calc(.63rem * var(--mw-font-scale,1));line-height:1.6;color:#625875;margin-top:6px}
+.adventure-app .adv-moon-chapter{background:linear-gradient(145deg,#eeeafb,#e3eafa);border-color:#a99dc9}
+.adventure-app .adv-moon-chapter .adv-chapter-icon{color:#68589d;text-shadow:0 0 15px #a99ad266}
+.adventure-app .adv-moon-chapter.adv-chapter-selected{background:linear-gradient(145deg,#e5def9,#dfe9fc);box-shadow:0 4px 0 #c6bee0}
+.adventure-app .adv-moon-chapter[aria-disabled="true"]{background:linear-gradient(145deg,#efedf3,#e9edf3)}
+.adventure-app.adv-theme-moon-maze .adv-hero{background:radial-gradient(ellipse at 90% 0,#514773 0,transparent 60%),linear-gradient(125deg,#28233f,#293956);border-color:#595078;color:#f1edff}
+.adventure-app.adv-theme-moon-maze .adv-hero :is(.adv-eyebrow,.adv-small){color:#d4d2eb}
+.adventure-app .adv-moon-scene{background:radial-gradient(ellipse at 50% 16%,#65729b 0,transparent 53%),linear-gradient(#27233f,#252f4a);border-color:#9287b0;color:#ede7ff}
+.adventure-app .adv-moon-scene .adv-scene-landmark{font-family:serif;color:#f0eaff;font-size:calc(95px * var(--mw-font-scale,1));top:-13px;filter:drop-shadow(0 0 14px #d1c9ff99)}
+.adventure-app .adv-moon-scene .adv-scene-orbit{border-color:#b3abd666;width:198px;height:198px;top:-3px}
+.adventure-app .adv-moon-scene .adv-scene-orbit-two{width:149px;height:149px;top:20px;border-color:#a2baf655}
+.adventure-app .adv-moon-scene .adv-scene-moon{left:23px;top:14px;font-size:calc(25px * var(--mw-font-scale,1));color:#d8d1ff}
+.adventure-app .adv-moon-scene .adv-scene-trail{left:46%;bottom:-67px;width:45px;height:137px;background:#aab9df;box-shadow:0 0 0 2px #63739f;transform:rotate(0);border-radius:0;opacity:.8}
+.adventure-app .adv-moon-scene .adv-scene-wizard{left:42%;bottom:14px;color:#e7ddff;filter:drop-shadow(2px 4px 0 #1e1a37)}
+.adventure-app .adv-moon-scene .adv-scene-label{color:#d0c8ec}
+.adventure-app .adv-scene-maze-wall{position:absolute;height:74px;width:35%;bottom:30px;border:5px solid #8b8aad;border-bottom-width:9px;border-radius:3px;box-shadow:inset 0 0 0 5px #303750,0 4px 0 #1c203a;z-index:1}
+.adventure-app .adv-scene-maze-wall-one{left:-5px;border-right:0}
+.adventure-app .adv-scene-maze-wall-two{right:-5px;border-left:0;bottom:12px}
+.adventure-app .adv-scene-maze-wall:before{content:"";position:absolute;inset:13px 10px;border:4px solid #69799f;border-right:0}
+.adventure-app .adv-scene-maze-wall-two:before{border-right:4px solid #69799f;border-left:0}
+.adventure-app .adv-scene-maze-star{position:absolute;right:24px;top:20px;color:#c5d9ff;font-size:calc(24px * var(--mw-font-scale,1));text-shadow:0 0 12px #b0ccff}
+.adventure-app .adv-moon-rules{padding:20px 24px;border:1px solid #b9b1d5;border-radius:17px;background:linear-gradient(110deg,#efebfa,#e9effc);margin-top:19px}
+.adventure-app .adv-moon-rules h3{font-size:calc(1rem * var(--mw-font-scale,1));color:#484078;margin-bottom:7px}
+.adventure-app .adv-moon-rules p{font-size:calc(.85rem * var(--mw-font-scale,1));color:#51496d}
+.adventure-app .adv-moon-rules .adv-small{margin-top:8px;font-size:calc(.78rem * var(--mw-font-scale,1))}
+.adventure-app.adv-theme-moon-maze .adv-button-primary{box-shadow:0 4px 0 #292346}
+.adventure-app.adv-theme-moon-maze .adv-button-primary:hover{background:#36305f}
+.adventure-app.adv-theme-moon-maze .adv-button-gold{background:#c7d4ff;border-color:#9aa8d1;color:#37305c;box-shadow:0 4px 0 #abb7db}
+.adventure-app.adv-theme-moon-maze .adv-ranked-card{background:#eef1fc;border-color:#bac5e0}
+.adventure-app.adv-theme-moon-maze .adv-mode-symbol{background:#e4def3}
+.adventure-app.adv-theme-moon-maze .adv-ranked-card .adv-mode-symbol{background:#c7d4ff}
+.adventure-app.adv-theme-moon-maze .adv-checkpoint{background:#eeeaf8;border-color:#c4badc}
+.adventure-app.adv-theme-moon-maze .adv-boss-card{background:linear-gradient(135deg,#eeebfa,#fcfbff 65%);border-color:#aea0d0}
+.adventure-app.adv-theme-moon-maze .adv-boss-card:before{content:"☾";color:#e1ddef}
+.adventure-app.adv-theme-moon-maze .adv-option{border-color:#c5bada;box-shadow:0 4px 0 #e1dceb}
+.adventure-app.adv-theme-moon-maze .adv-option-selected{border-color:#484078;box-shadow:0 4px 0 #302850}
+.adventure-app.adv-theme-moon-maze .adv-option:hover{background:#f0ecfa;border-color:#706093}
+.adventure-app.adv-theme-moon-maze .adv-option-selected:hover{background:#484078;color:#fff}
+.adventure-app.adv-theme-moon-maze .adv-map-number{border-color:#b6accf;background:#f8f6ff}
+.adventure-app.adv-theme-moon-maze .adv-map-cleared .adv-map-number{background:#484078;border-color:#484078}
+.adventure-app.adv-theme-moon-maze .adv-map-current .adv-map-number{background:#c7d4ff;border-color:#8d96bd;box-shadow:0 0 0 5px #aebfe23b}
+.adventure-app .adv-moon-map .adv-map-stop:not(:last-child):after{content:"";height:3px;background:#c7bedc;position:absolute;top:19px;left:calc(50% + 20px);width:calc(100% - 32px);z-index:0}
+.adventure-app .adv-sealed-note{font-size:calc(.78rem * var(--mw-font-scale,1));color:#665f7d;margin-top:17px;padding:10px 13px;border:1px solid #d2cde0;border-radius:9px;background:#f0edf6}
+.adventure-app .adv-button.adv-button-sealed:disabled{background:#e5e7eb;border-color:#c3c7ce;color:#626975;box-shadow:none;opacity:1;cursor:not-allowed}
+.adventure-app .adv-button.adv-button-sealed:disabled:before{content:"⊘";font-size:1.1em;color:#757b86}
+.adventure-app.adv-theme-moon-maze .adv-complete{background:linear-gradient(135deg,#e7e4f7,#fcfbff 65%);border-color:#aca2ca}
+.adventure-app.adv-theme-moon-maze .adv-complete-badge{border-color:#bfb4de;box-shadow:4px 5px 0 #d9d4e9}
+@media(max-width:760px){.adventure-app .adv-moon-map .adv-map-stop:nth-child(5):after{display:none}.adventure-app .adv-moon-rules{padding:18px 20px}}
+@media(max-width:520px){.adventure-app .adv-moon-scene .adv-scene-landmark{font-size:calc(75px * var(--mw-font-scale,1));top:-16px}.adventure-app .adv-moon-scene .adv-scene-orbit-one{width:155px;height:155px;top:-9px}.adventure-app .adv-moon-scene .adv-scene-orbit-two{width:115px;height:115px;top:12px}.adventure-app .adv-moon-scene .adv-scene-wizard{left:45%;font-size:calc(45px * var(--mw-font-scale,1));bottom:10px}.adventure-app .adv-scene-maze-wall{height:55px;bottom:24px}.adventure-app .adv-scene-maze-wall-two{bottom:8px}.adventure-app .adv-moon-map .adv-map-stop:not(:last-child):after{top:16px;left:calc(50% + 17px)}.adventure-app .adv-moon-rules{padding:17px}.adventure-app .adv-moon-rules p{font-size:calc(.8rem * var(--mw-font-scale,1))}.adventure-app .adv-sealed-note{font-size:calc(.72rem * var(--mw-font-scale,1))}}
+:root:is([data-font-scale="150"],[data-font-scale="175"],[data-font-scale="200"]) .adventure-app .adv-moon-map .adv-map-stop:after{display:none}
+
+/* The Boundless Star Expanse: forty numbered lights on each of twenty-five stars. */
+.adventure-app.adv-theme-star-expanse{--adv-green:#173b5c;--adv-ink:#20394f;--adv-muted:#526b80;--adv-mint:#e7f2f7;--adv-line:#bbd2df;--adv-gold:#f3d47d;--adv-paper:#fbfdff}
+.adventure-app .adv-star-chapter{background:linear-gradient(145deg,#e0edf6,#e9edf8);border-color:#7b9cb5}
+.adventure-app .adv-star-chapter .adv-chapter-icon{color:#245570;text-shadow:0 0 13px #5dabc366}
+.adventure-app .adv-star-chapter.adv-chapter-selected{background:linear-gradient(145deg,#d8eaf4,#e6eafa);border-color:#315c7b;box-shadow:0 4px 0 #b7cbdc}
+.adventure-app .adv-star-chapter[aria-disabled="true"]{background:linear-gradient(145deg,#e8edf1,#eceef5)}
+.adventure-app.adv-theme-star-expanse .adv-hero{background:radial-gradient(ellipse at 82% 5%,#26496d 0,transparent 57%),linear-gradient(125deg,#111c35,#172d49);border-color:#3d5e79;color:#e7f3ff}
+.adventure-app.adv-theme-star-expanse .adv-hero :is(.adv-eyebrow,.adv-small){color:#b9d6e9}
+.adventure-app .adv-star-scene{background:radial-gradient(circle at 14% 23%,#f5df9b 0 1px,transparent 2px),radial-gradient(circle at 79% 18%,#d4efff 0 1px,transparent 2px),radial-gradient(circle at 64% 70%,#d4efff 0 1px,transparent 2px),radial-gradient(circle at 22% 72%,#d4efff 0 1px,transparent 2px),radial-gradient(ellipse at 52% 40%,#224c67 0,transparent 60%),linear-gradient(#101b35,#172c49);background-size:71px 67px,97px 83px,113px 91px,127px 109px,100% 100%,100% 100%;border-color:#7494b0;color:#dbf3ff}
+.adventure-app .adv-star-scene .adv-scene-landmark{top:4px;font-size:calc(74px * var(--mw-font-scale,1));color:#f7df9b;filter:drop-shadow(0 0 18px #e4c46f88)}
+.adventure-app .adv-star-scene .adv-scene-orbit{width:232px;height:162px;top:26px;border-color:#91c2da55;transform:translateX(-50%) rotate(-22deg)}
+.adventure-app .adv-star-scene .adv-scene-orbit-two{width:175px;height:108px;top:51px;border-style:dashed;border-color:#ead28c66}
+.adventure-app .adv-star-scene .adv-scene-moon{left:22px;top:16px;color:#f7dc8d;font-size:calc(27px * var(--mw-font-scale,1))}
+.adventure-app .adv-scene-star-planet{position:absolute;width:47px;height:47px;right:25px;bottom:44px;border:1px solid #b9e1f3;border-radius:50%;background:radial-gradient(circle at 30% 25%,#a9e0eb,#477d9f 55%,#25445f 80%);box-shadow:0 0 19px #6fb9d333;z-index:1}
+.adventure-app .adv-scene-star-ring{position:absolute;right:9px;bottom:57px;width:79px;height:18px;border:3px solid #d2bc7c;border-top-color:#e6d5a0;border-radius:50%;transform:rotate(-24deg);z-index:2}
+.adventure-app .adv-scene-constellation{position:absolute;left:13px;top:85px;color:#9cd4ee;font-size:calc(17px * var(--mw-font-scale,1));letter-spacing:6px;transform:rotate(-25deg);text-shadow:0 0 8px #84cee9}
+.adventure-app .adv-scene-shooting-star{position:absolute;right:17px;top:24px;width:38px;height:2px;background:linear-gradient(90deg,transparent,#f6db90);transform:rotate(-32deg);box-shadow:0 0 6px #f6db90}
+.adventure-app .adv-star-scene .adv-scene-trail{left:45%;width:48px;height:128px;bottom:-62px;border:1px solid #739ebd;background:linear-gradient(#8db6cb,#3b6181);box-shadow:0 0 15px #89c4e24d;transform:rotate(12deg);opacity:.8}
+.adventure-app .adv-star-scene .adv-scene-wizard{left:41%;bottom:14px;color:#f4dda1;filter:drop-shadow(2px 4px 0 #0b1730)}
+.adventure-app .adv-star-scene .adv-scene-label{color:#b9d3e9}
+.adventure-app .adv-star-rules{background:linear-gradient(110deg,#e5f1f6,#edf0fa);border-color:#a9c6d8}
+.adventure-app .adv-star-rules h3{color:#224c68}
+.adventure-app .adv-star-rules p{color:#3b5c73}
+.adventure-app.adv-theme-star-expanse .adv-button-primary{box-shadow:0 4px 0 #10273f}
+.adventure-app.adv-theme-star-expanse .adv-button-primary:hover{background:#245572}
+.adventure-app.adv-theme-star-expanse .adv-button-gold{border-color:#bd9d4d;background:#f3d47d;color:#263b50;box-shadow:0 4px 0 #d4b66a}
+.adventure-app.adv-theme-star-expanse .adv-ranked-card{background:#edf4fc;border-color:#b2cadf}
+.adventure-app.adv-theme-star-expanse .adv-mode-symbol{background:#deedf4}
+.adventure-app.adv-theme-star-expanse .adv-ranked-card .adv-mode-symbol{background:#f3d47d}
+.adventure-app.adv-theme-star-expanse .adv-checkpoint{background:#e4eff7;border-color:#b3cbdb}
+.adventure-app.adv-theme-star-expanse .adv-boss-card{background:linear-gradient(135deg,#e7f2f9,#fbfdff 65%);border-color:#85aac2}
+.adventure-app.adv-theme-star-expanse .adv-boss-card:before{content:"✧";color:#d5e6f1}
+.adventure-app.adv-theme-star-expanse .adv-option{border-color:#a9c4d6;box-shadow:0 4px 0 #d7e5ef}
+.adventure-app.adv-theme-star-expanse .adv-option-selected{border-color:#173b5c;box-shadow:0 4px 0 #10273f}
+.adventure-app.adv-theme-star-expanse .adv-option:hover{background:#e9f3f8;border-color:#5b86a4}
+.adventure-app.adv-theme-star-expanse .adv-option-selected:hover{background:#173b5c;color:#fff}
+.adventure-app .adv-star-map{grid-template-columns:repeat(10,minmax(0,1fr));gap:12px 8px;padding:20px 16px;margin:18px 0;border:1px solid #bbd2df;border-radius:19px;background:radial-gradient(ellipse at 50% 0,#edf6fb,#e6eef7);isolation:isolate}
+.adventure-app .adv-star-map .adv-map-number{width:34px;height:34px;border-color:#93b1c9;background:#f8fcff;box-shadow:0 0 0 4px #c1d9e540}
+.adventure-app .adv-star-map .adv-map-name{display:none}
+.adventure-app .adv-star-map .adv-map-cleared .adv-map-number{background:#204e6d;border-color:#204e6d;color:#fff}
+.adventure-app .adv-star-map .adv-map-current .adv-map-number{background:#f3d47d;border-color:#af9148;box-shadow:0 0 0 5px #f1d27d66;color:#173b5c}
+.adventure-app .adv-star-map .adv-map-incorrect .adv-map-number{background:#f6e8dc;border-color:#b57557;color:#8a4025}
+.adventure-app.adv-theme-star-expanse .adv-sealed-note{color:#536878;background:#edf1f5;border-color:#c8d3dd}
+.adventure-app.adv-theme-star-expanse .adv-complete{background:linear-gradient(135deg,#e3eff8,#fbfdff 65%);border-color:#91b0c8}
+.adventure-app.adv-theme-star-expanse .adv-complete-badge{border-color:#e8cd80;box-shadow:4px 5px 0 #c7dce9}
+@media(max-width:760px){.adventure-app .adv-star-map{grid-template-columns:repeat(8,minmax(0,1fr));gap:11px 6px;padding:17px 12px}.adventure-app .adv-star-map .adv-map-number{width:30px;height:30px;font-size:calc(.75rem * var(--mw-font-scale,1))}}
+@media(max-width:520px){.adventure-app .adv-star-scene .adv-scene-landmark{top:-6px;font-size:calc(63px * var(--mw-font-scale,1))}.adventure-app .adv-star-scene .adv-scene-orbit-one{width:210px;height:130px;top:10px}.adventure-app .adv-star-scene .adv-scene-orbit-two{width:160px;height:93px;top:28px}.adventure-app .adv-star-scene .adv-scene-wizard{left:45%;font-size:calc(43px * var(--mw-font-scale,1));bottom:10px}.adventure-app .adv-scene-star-planet{bottom:27px;right:31px;width:37px;height:37px}.adventure-app .adv-scene-star-ring{bottom:36px;right:15px;width:69px;height:17px}.adventure-app .adv-scene-constellation{left:22px;top:69px}.adventure-app .adv-star-map{gap:10px 3px;padding:16px 7px}.adventure-app .adv-star-map .adv-map-stop{padding:0}.adventure-app .adv-star-map .adv-map-number{width:28px;height:28px}}
+
+/* Grade-relative difficulty and help rules are readable before entering a route. */
+.adventure-app .adv-campaign-badges{display:flex;flex-wrap:wrap;align-items:flex-start;gap:6px;max-width:100%;min-width:0;margin-top:10px}
+.adventure-app :is(.adv-difficulty-badge,.adv-policy-badge){display:block;max-width:100%;min-width:0;border:1px solid;border-radius:8px;padding:5px 8px;font-size:calc(.68rem * var(--mw-font-scale,1));font-weight:700;line-height:1.65;white-space:normal;overflow-wrap:anywhere;letter-spacing:0;text-align:left}
+.adventure-app .adv-difficulty-badge{flex:1 1 100%}
+.adventure-app .adv-difficulty-standard{color:#27513a;border-color:#aec8b3;background:#e9f2e8}
+.adventure-app .adv-difficulty-hard{color:#51416f;border-color:#b8a8ce;background:#eee8f8}
+.adventure-app .adv-difficulty-extreme{color:#1c4866;border-color:#9bb9ce;background:#e0edf7}
+.adventure-app .adv-policy-allowed{color:#28563b;border-color:#abc4ae;background:#e6f0e5}
+.adventure-app .adv-policy-unavailable{color:#4c5561;border-color:#b9c0c8;background:#e5e7eb}
+.adventure-app .adv-hero-badges{margin:0 0 17px}
+.adventure-app .adv-hero-badges :is(.adv-difficulty-badge,.adv-policy-badge){font-size:calc(.76rem * var(--mw-font-scale,1))}
+.adventure-app .adv-hero-badges .adv-difficulty-badge{flex:0 1 auto;color:#fff0ba;border-color:#d0c18c80;background:#ffffff12}
+.adventure-app .adv-run-badges{flex:1 1 100%;margin-top:0;padding-top:9px;border-top:1px solid var(--adv-line)}
+.adventure-app .adv-run-badges .adv-difficulty-badge{flex:0 1 auto}
+.adventure-app .adv-run-badges :is(.adv-difficulty-badge,.adv-policy-badge){font-size:calc(.74rem * var(--mw-font-scale,1))}
+@media(max-width:520px){.adventure-app .adv-campaign-badges{gap:5px}.adventure-app :is(.adv-difficulty-badge,.adv-policy-badge){padding:5px 7px;font-size:calc(.67rem * var(--mw-font-scale,1))}.adventure-app .adv-hero-badges :is(.adv-difficulty-badge,.adv-policy-badge){font-size:calc(.74rem * var(--mw-font-scale,1))}.adventure-app .adv-run-badges .adv-difficulty-badge{flex-basis:100%}}

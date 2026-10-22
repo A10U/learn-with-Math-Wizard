@@ -4,6 +4,7 @@ import { createStore } from './lib/storage.js';
 import { createAudio } from './lib/audio.js';
 import { createBackgroundMusic } from './lib/background-music.js';
 import { GRADE_PROFILES, QUESTION_PROFILE_VERSION, WRITING_PROFILE_VERSION, createQuestionRound, localizeQuestion, translateTopic, getGradeProfileText } from './lib/questions.js';
+import { renderQuestionVisual } from './lib/question-visuals.js';
 import { createHandwritingRound, localizeHandwritingRound } from './lib/handwriting-content.js';
 import { geometryPaths, createGeometryRound, localizeGeometryRound, localizedShape } from './lib/geometry.js';
 import { mountHandwritingCanvas } from './lib/handwriting.js';
@@ -14,7 +15,7 @@ import { createAdventureController } from './lib/adventure-ui.js';
 import { createWritingTableController } from './lib/writing-table-ui.js';
 import { createMathSimulatorController } from './lib/math-simulator-ui.js';
 import { createMagicShopController } from './lib/magic-shop-ui.js';
-import { getCampaignInfo } from './lib/adventure.js';
+import { ADVENTURE_CAMPAIGNS, getCampaignInfo } from './lib/adventure.js';
 import { initializeLanguage, getLanguage, setLanguage, t, translateStatic } from './lib/i18n.js';
 import { trackGameStart, trackGameComplete } from './lib/analytics.js';
 import { createFontSizeController } from './lib/font-size.js';
@@ -79,9 +80,20 @@ function renderHome() {
   document.querySelectorAll('[data-grade]').forEach(item => item.setAttribute('aria-pressed', String(Number(item.dataset.grade) === selectedGrade)));
   $('grade-profile-description').textContent = t('โจทย์คิดเลข ป.' + selectedGrade + ' · ' + displayProfile.description);
   const topicPicker = $('practice-topic'); topicPicker.replaceChildren();
-  const allTopics = node('option', '', 'รวมทุกหัวข้อ · คละ 5 ข้อ'); allTopics.value = ''; topicPicker.append(allTopics);
+  const allTopics = node('option', '', getLanguage() === 'en' ? 'Rotate through all topics · 5 questions' : 'หมุนเวียนทุกหัวข้อ · รอบละ 5 ข้อ'); allTopics.value = ''; topicPicker.append(allTopics);
   profile.topics.forEach(topic => { const option = node('option', '', translateTopic(topic, getLanguage())); option.value = topic; topicPicker.append(option); });
   topicPicker.value = selectedPracticeTopic || '';
+  const english = getLanguage() === 'en';
+  $('practice-scope-note').textContent = english
+    ? `${profile.topics.length} topics · mixed rounds visit every topic within ${Math.ceil(profile.topics.length / 5)} rounds, or choose one topic to practice.`
+    : `${profile.topics.length} หัวข้อ · เล่นโจทย์คละ ${Math.ceil(profile.topics.length / 5)} รอบจะได้พบทุกหัวข้อ หรือเลือกฝึกทีละเรื่องได้`;
+  $('curriculum-heading').textContent = english ? `Explore ${profile.topics.length} topics for Grade ${selectedGrade}` : `ดูเส้นทาง ${profile.topics.length} หัวข้อของ ป.${selectedGrade}`;
+  const topicCards = $('curriculum-topics'); topicCards.replaceChildren();
+  profile.topics.forEach((topic, index) => {
+    const card = button(`${index + 1}. ${translateTopic(topic, getLanguage())}`, 'curriculum-topic', () => { selectPracticeTopic(topic); startPractice(); });
+    card.setAttribute('aria-label', english ? `Practice ${translateTopic(topic, 'en')}` : `ฝึก${topic}`);
+    topicCards.append(card);
+  });
   $('home-math-heading').textContent = t('ฝึกคณิตศาสตร์ ป.' + selectedGrade);
   $('home-arcade-heading').textContent = t('10 เกมคณิตศาสตร์ · ป.' + selectedGrade);
   $('start-practice').textContent = t(selectedPracticeTopic ? 'เริ่มฝึกหัวข้อนี้ →' : 'เริ่มฝึกโจทย์คละ →');
@@ -91,10 +103,19 @@ function renderHome() {
   $('home-challenge-label').textContent = t('ท้าทาย' + (motorRequired ? 'เขียน' : 'พิมพ์') + ' 5 ข้อ · ป.' + selectedGrade);
   $('motor-mode-note').textContent = t(motorRequired ? 'เขียน/ลากเส้นเป็นขั้นหลัก · แป้นตัวเลขใช้ยืนยันเลขที่เขียน' : 'ผู้ปกครองเปิดวิธีช่วย: ใช้แป้นตัวเลข ข้าม หรือแตะจับคู่แทนได้');
   $('home-symbol').textContent = t(selectedGrade === 1 ? '+ −' : selectedGrade === 2 ? '× ÷' : selectedGrade >= 5 ? '% ½' : '½ ¼');
-  const english = getLanguage() === 'en';
-  $('home-adventure-heading').textContent = english ? 'Eight paths through the wizard world' : '8 เส้นทางผจญภัยโลกเวทมนตร์';
-  $('home-adventure-description').textContent = english ? 'Clear stages to unlock new chapters, explore the 100-floor tower and face the final guardian.' : 'ผ่านด่านเพื่อปลดล็อกบทใหม่ สำรวจหอคอย 100 ชั้น และไปถึงบทปราบจอมมาร';
-  $('home-adventure-scope').textContent = english ? `Grade ${selectedGrade} · 8 chapters · 135 stages · saved checkpoints · local TOP 10` : `ป.${selectedGrade} · 8 บท · 135 ด่าน · บันทึกจุดพัก · TOP 10 บนเครื่อง`;
+  const campaignCount = ADVENTURE_CAMPAIGNS.length, stageCount = ADVENTURE_CAMPAIGNS.reduce((sum, item) => sum + item.stageCount, 0);
+  $('home-adventure-heading').textContent = english ? `${campaignCount} paths through the wizard world` : `${campaignCount} เส้นทางผจญภัยโลกเวทมนตร์`;
+  $('home-adventure-description').textContent = english ? 'Explore the tower, seal the Demon Lord and clear the Silent Moon. Then reach the Boundless Star Expanse: 25 stars, 40 stages each, with 2 extra thinking steps and no hints.' : 'สำรวจหอคอย ปราบจอมมาร และผ่านจันทราไร้เสียง แล้วเดินทางสู่หมู่มวลดาราเวิ้งว้าง 25 ดวง ดวงละ 40 ด่าน เพิ่มการคิด 2 ขั้น โดยไม่มีคำใบ้';
+  $('home-adventure-scope').textContent = english ? `Grade ${selectedGrade} · ${campaignCount} chapters · ${stageCount} stages · saved checkpoints · local TOP 10` : `ป.${selectedGrade} · ${campaignCount} บท · ${stageCount} ด่าน · บันทึกจุดพัก · TOP 10 บนเครื่อง`;
+  const difficultyNotes = $('home-adventure-difficulty'); difficultyNotes.replaceChildren();
+  const pathNotes = english
+    ? [['Other paths', 'At your grade level', 'Adventure hints available'], ['Silent Moon', '1 extra thinking step', 'No hints'], ['Boundless Star Expanse', '2 extra thinking steps', 'No hints']]
+    : [['เส้นทางทั่วไป', 'ตามชั้นเรียน', 'ผจญภัยใช้คำใบ้ได้'], ['จันทราไร้เสียง', 'เพิ่มการคิด 1 ขั้น', 'ใช้คำใบ้ไม่ได้'], ['หมู่มวลดาราเวิ้งว้าง', 'เพิ่มการคิด 2 ขั้น', 'ใช้คำใบ้ไม่ได้']];
+  pathNotes.forEach(([title, level, hint], index) => {
+    const note = node('div', 'home-adventure-difficulty-line');
+    note.append(node('strong', '', title), node('span', '', level), node('span', 'home-adventure-hint-policy' + (index ? ' sealed' : ''), hint));
+    difficultyNotes.append(note);
+  });
   $('start-adventure').textContent = english ? 'Enter the adventure world →' : 'เข้าสู่โลกผจญภัย →';
 }
 function selectPracticeTopic(topic) {
@@ -413,7 +434,9 @@ function startRound(mode, grade = selectedGrade, topic = null) {
   if (number !== selectedGrade) selectedPracticeTopic = null;
   if (progress && view === 'learning') saveProgress(); cancelChallenge(); selectedGrade = number; notice(store.writeGrade(number));
   const recent = store.readRecent(number);
-  const deck = createQuestionRound(number, { excludeIds: recent.data, topic, language: getLanguage() });
+  const topicOffset = topic === null ? store.readTopicOffset(number).data : null;
+  const deck = createQuestionRound(number, { excludeIds: recent.data, topic, language: getLanguage(), topicOffset });
+  if (topic === null) notice(store.writeTopicOffset(number, (topicOffset + 5) % profile.topics.length));
   if (mode === 'challenge' && motorRequired) deck.deckVersion = WRITING_PROFILE_VERSION;
   const history = store.writeRecent(number, deck.questions.map(question => question.signature)); notice(history);
   challenge = { mode, motorRequired, grade: number, deck, questions: deck.questions, active: true, index: 0, answered: 0, correct: 0, locked: false, startedAt: Date.now(), elapsedMs: 0, feedback: '', saved: false, attempts: deck.questions.map(() => newAttempt()), hintLevels: [0,0,0,0,0], draft: '', scratchStrokes: deck.questions.map(() => []), scratchOpen: [true,true,true,true,true], justEarned: false, encouragement: 'ค่อย ๆ คิดทีละก้าว เราไปด้วยกัน!' };
@@ -491,6 +514,8 @@ function renderScratchpad(panel, onGate = () => {}) {
   details.addEventListener('toggle', () => { if (challenge !== round) return; round.scratchOpen[index] = details.open; if (details.open) surface.control.redraw(); });
 }
 function renderQuestionChart(panel, visual) {
+  const diagram = renderQuestionVisual(visual, { language: getLanguage() });
+  if (diagram) { panel.append(diagram); return; }
   const figure = node('figure', 'question-chart');
   figure.append(node('figcaption', '', visual.type === 'pie' ? 'แผนภูมิรูปวงกลม' : 'กราฟเส้น'));
   const svgNode = (tag, attributes = {}, text = '') => { const element = document.createElementNS('http://www.w3.org/2000/svg', tag); for (const [key, value] of Object.entries(attributes)) element.setAttribute(key, value); if (text) element.textContent = t(text); return element; };
@@ -524,7 +549,7 @@ function renderChallenge() {
   if (!challenge) return;
   if (cleanupDrawing) { cleanupDrawing(); cleanupDrawing = null; }
   const practice = challenge.mode === 'practice';
-  $('round-scope').textContent = t('ป.' + challenge.grade + ' · ' + (challenge.deck.topic ? translateTopic(challenge.deck.topic, getLanguage()) : 'โจทย์คละทุกหัวข้อ'));
+  $('round-scope').textContent = t('ป.' + challenge.grade + ' · ' + (challenge.deck.topic ? translateTopic(challenge.deck.topic, getLanguage()) : getLanguage() === 'en' ? '5 mixed topics' : 'โจทย์คละ 5 หัวข้อ'));
   $('challenge-heading').textContent = t(practice ? (motorRequired ? 'เขียนก่อน แล้วค่อยยืนยันคำตอบ' : 'ลองคิดตามจังหวะของเรา') : motorRequired ? 'ท้าทายเขียนคำตอบ' : 'ท้าทายพิมพ์คำตอบ');
   $('round-rules').textContent = t(practice ? (motorRequired ? 'เขียนคำตอบก่อน · ไม่จับเวลา · ขอคำใบ้และลองใหม่ได้' : 'โหมดช่วย · เขียนหรือใช้แป้นตัวเลขได้ · ไม่จับเวลา') : motorRequired ? 'เวลาเดินขึ้นรวมการเขียน · เขียนก่อนยืนยัน · รับคำตอบครั้งเดียวต่อข้อ' : 'โหมดช่วยพิมพ์คำตอบ · เวลาเดินขึ้น ไม่มีหมดเวลา · รับคำตอบครั้งเดียวต่อข้อ');
   $('round-time-stat').hidden = practice; $('round-ranking').hidden = practice;

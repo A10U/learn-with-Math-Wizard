@@ -136,3 +136,13 @@
   :root:is([data-font-scale="150"],[data-font-scale="175"],[data-font-scale="200"]) :is(.math-simulator-entry,.writing-table-entry,.geometry-main){flex-wrap:wrap}
   :root:is([data-font-scale="150"],[data-font-scale="175"],[data-font-scale="200"]) :is(.math-simulator-entry,.writing-table-entry)>span:nth-child(2){flex:1 1 100%}
 }
+.curriculum-path { margin: 1rem 0; padding: .8rem; border: 1px solid #d7e2ca; border-radius: 16px; background: #f8fbf3; }
+.curriculum-path summary { cursor: pointer; font-weight: 700; color: #345731; line-height: 1.6; }
+.curriculum-topics { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr)); gap: .5rem; margin-top: .8rem; }
+.curriculum-topic { min-height: 48px; padding: .65rem .8rem; border: 1px solid #d7e2ca; border-radius: 10px; background: white; color: #345731; font: inherit; text-align: left; cursor: pointer; overflow-wrap: anywhere; }
+.curriculum-topic:hover, .curriculum-topic:focus-visible { background: #eaf4de; border-color: #527a3b; }
+.home-adventure-difficulty { display: grid; gap: .6rem; margin: 1rem 0; }
+.home-adventure-difficulty-line { display: flex; align-items: center; flex-wrap: wrap; gap: .35rem .65rem; padding: .65rem .8rem; background: #fffdf7; border: 1px solid #d5ddcd; border-radius: 10px; font-size: calc(12px * var(--mw-font-scale,1)); line-height: 1.65; }
+.home-adventure-difficulty-line strong { flex-basis: 100%; color: #245f44; }
+.home-adventure-hint-policy { padding: .15rem .45rem; border-radius: 6px; background: #e9f1df; color: #365738; }
+.home-adventure-hint-policy.sealed { background: #e5e7eb; color: #626975; }
