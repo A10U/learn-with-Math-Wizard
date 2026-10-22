@@ -2,6 +2,7 @@ import { MISSION, CONTACTS } from './lib/content.js';
 import { parseNumber, newAttempt, recordAttempt, createLearningState, makeTenMove, rankScores } from './lib/engine.js';
 import { createStore } from './lib/storage.js';
 import { createAudio } from './lib/audio.js';
+import { createBackgroundMusic } from './lib/background-music.js';
 import { GRADE_PROFILES, QUESTION_PROFILE_VERSION, WRITING_PROFILE_VERSION, createQuestionRound, localizeQuestion, translateTopic, getGradeProfileText } from './lib/questions.js';
 import { createHandwritingRound, localizeHandwritingRound } from './lib/handwriting-content.js';
 import { geometryPaths, createGeometryRound, localizeGeometryRound, localizedShape } from './lib/geometry.js';
@@ -22,12 +23,14 @@ const $ = id => document.getElementById(id);
 initializeLanguage();
 const fontSize = createFontSizeController({ document });
 const store = createStore();
-const arcade = createArcadeController($('arcade-panel'), goHome);
-const adventure = createAdventureController($('adventure-panel'), goHome);
-const writingTables = createWritingTableController($('writing-tables-panel'), { onHome: goHome, getColor: () => pencilColor, isSmooth: () => smoothLines });
-const mathSimulator = createMathSimulatorController($('math-simulator-panel'), { onHome: goHome });
-const magicShop = createMagicShopController($('magic-shop-panel'), { onHome: goHome });
 const audio = createAudio();
+const music = createBackgroundMusic();
+const gameAudio = { playEffect(name) { try { return audio.playEffect(name); } catch { return false; } } };
+const arcade = createArcadeController($('arcade-panel'), goHome, gameAudio);
+const adventure = createAdventureController($('adventure-panel'), goHome, gameAudio);
+const writingTables = createWritingTableController($('writing-tables-panel'), { onHome: goHome, getColor: () => pencilColor, isSmooth: () => smoothLines, ...gameAudio });
+const mathSimulator = createMathSimulatorController($('math-simulator-panel'), { onHome: goHome, ...gameAudio });
+const magicShop = createMagicShopController($('magic-shop-panel'), { onHome: goHome, ...gameAudio });
 const initial = store.readProgress();
 let progress = initial.data;
 let view = 'home';
@@ -104,6 +107,9 @@ function refreshLanguageControls() {
   $('language-th').setAttribute('aria-pressed', String(getLanguage() === 'th'));
   $('language-en').setAttribute('aria-pressed', String(getLanguage() === 'en'));
   $('audio-toggle').textContent = t(audio.isEnabled() ? 'เสียง: เปิด' : 'เสียง: ปิด');
+  $('audio-toggle').setAttribute('aria-pressed', String(audio.isEnabled()));
+  $('music-toggle').textContent = t(music.isEnabled() ? 'เพลง: เปิด' : 'เพลง: ปิด');
+  $('music-toggle').setAttribute('aria-pressed', String(music.isEnabled()));
   $('smooth-toggle').textContent = t('เส้นนุ่ม: ' + (smoothLines ? 'เปิด' : 'ปิด'));
   if (lastStorageMessage) $('storage-status').textContent = t(lastStorageMessage);
   renderPencilPalette(); renderArcadeMenu($('arcade-games'), startArcade);
@@ -135,6 +141,21 @@ function changeLanguage(language) {
   else if (view === 'parents') { if (parentUnlocked) renderParents(); else openParentGate(); }
   for (const [id, value] of drafts) if (value !== undefined && $(id)) $(id).value = value;
   if (previousFocus && $(previousFocus)) $(previousFocus).focus();
+  return true;
+}
+function setAudioEnabled(value) {
+  if (typeof value !== 'boolean') return false;
+  audio.setEnabled(value);
+  $('audio-toggle').textContent = t(value ? 'เสียง: เปิด' : 'เสียง: ปิด');
+  $('audio-toggle').setAttribute('aria-pressed', String(value));
+  if (value) gameAudio.playEffect('tap');
+  return true;
+}
+function setMusicEnabled(value) {
+  if (typeof value !== 'boolean') return false;
+  music.setEnabled(value);
+  $('music-toggle').textContent = t(value ? 'เพลง: เปิด' : 'เพลง: ปิด');
+  $('music-toggle').setAttribute('aria-pressed', String(value));
   return true;
 }
 function selectGrade(grade) {
@@ -229,7 +250,7 @@ function submitLearningAnswer(field, raw) {
   if (!progress || view !== 'learning' || fields[progress.step] !== field || progress.answers[field].correct) return { valid: false, correct: false };
   if (motorRequired && ['base', 'transfer'].includes(field) && !inkCanSubmit('guided-' + field, guidedInk[field])) return { valid: false, correct: false, reason: 'writing-required' };
   const result = recordAttempt(progress.answers[field], raw, expected[field], { hintLevel: progress.hints[field] || 0 });
-  if (result.valid) { if (['base', 'transfer'].includes(field)) consumeInk(guidedInk[field]); progress.answers[field] = result.attempt; saveProgress(); }
+  if (result.valid) { if (['base', 'transfer'].includes(field)) consumeInk(guidedInk[field]); progress.answers[field] = result.attempt; saveProgress(); gameAudio.playEffect(result.correct ? 'success' : 'retry'); }
   return result;
 }
 function requestHint(field) {
@@ -260,7 +281,7 @@ function advanceLearning() {
   else if (current === 'explain' && progress.answers.explanation.correct) progress.step = 'transfer';
   else if (current === 'transfer' && progress.answers.transfer.correct) { progress.step = 'summary'; progress.completed = true; trackGameComplete('mission-make-ten'); }
   else return false;
-  saveProgress(); renderLearning(); return true;
+  saveProgress(); renderLearning(); gameAudio.playEffect(progress.completed ? 'complete' : 'tap'); return true;
 }
 function learningHeader() {
   const index = steps.indexOf(progress.step); $('step-position').textContent = t('ช่วงที่ ' + (index + 1) + ' จาก 9 · โหมดฝึก ไม่มีเวลาบังคับ');
@@ -416,7 +437,7 @@ function finishRound() {
     const score = { deckId: deck.deckId, deckVersion: deck.deckVersion, grade: challenge.grade, total: 5, correct: challenge.correct, elapsedMs: challenge.elapsedMs, completedAt: Date.now() };
     const saved = store.writeScore(score); challenge.saved = true; $('score-storage-status').textContent = t(saved.message); renderRanking(saved.data);
   }
-  renderChallenge(); trackGameComplete(challenge.mode); return true;
+  renderChallenge(); trackGameComplete(challenge.mode); gameAudio.playEffect('complete'); return true;
 }
 function roundStars() { return challenge ? challenge.attempts.filter(attempt => challenge.mode === 'practice' ? attempt.correct : attempt.firstCorrect === true).length : 0; }
 function renderAdventure() {
@@ -453,6 +474,7 @@ function submitChallengeAnswer(raw) {
   challenge.locked = challenge.mode === 'challenge' || result.correct;
   challenge.feedback = result.correct ? 'ถูกต้อง! ' + question.hint : challenge.mode === 'challenge' ? 'คำตอบคือ ' + question.answer + ' — ' + question.hint : (motorRequired ? 'ยังไม่ตรง ลองแก้รอยเขียนหรือเขียนใหม่ แล้วค่อยยืนยันอีกครั้ง' : 'ยังไม่ตรง ลองตรวจอีกครั้ง ขอคำใบ้ หรือไปข้อถัดไปได้');
   if (challenge.mode === 'challenge' && challenge.answered === 5) finishRound(); else renderChallenge();
+  if (challenge.active) gameAudio.playEffect(result.correct ? 'success' : 'retry');
   return result;
 }
 function nextChallengeQuestion() {
@@ -608,6 +630,7 @@ function advanceHandwriting(skip = false) {
   if (index === handwriting.activities.length - 1) { handwriting.completed = true; trackGameComplete('workshop-' + handwriting.mode); } else handwriting.index++;
   handwriting.selectedLeft = null; handwriting.feedback = ''; renderHandwriting();
   if (!skip && audio.isEnabled() && audio.isAvailable()) audio.speak(t('เยี่ยมเลย ได้ฝึกมืออีกหนึ่งกิจกรรม'));
+  if (!skip) gameAudio.playEffect(handwriting.completed ? 'complete' : 'success');
   return true;
 }
 function nextHandwritingActivity() { return advanceHandwriting(false); }
@@ -727,16 +750,21 @@ $('language-th').addEventListener('click', () => changeLanguage('th'));
 $('language-en').addEventListener('click', () => changeLanguage('en'));
 document.querySelectorAll('[data-grade]').forEach(item => item.addEventListener('click', () => selectGrade(Number(item.dataset.grade))));
 $('pause-mission').addEventListener('click', goHome); $('brand-home').addEventListener('click', goHome); $('leave-challenge').addEventListener('click', goHome); $('parents-home').addEventListener('click', goHome); $('open-parents').addEventListener('click', openParentGate);
-$('audio-toggle').addEventListener('click', () => { audio.setEnabled(!audio.isEnabled()); const enabled = audio.isEnabled(); $('audio-toggle').textContent = t(enabled ? 'เสียง: เปิด' : 'เสียง: ปิด'); $('audio-toggle').setAttribute('aria-pressed', String(enabled)); });
-window.addEventListener('beforeunload', () => { if (progress && view === 'learning') saveProgress(); adventure.deactivate(); writingTables.deactivate(); mathSimulator.deactivate(); magicShop.deactivate(); audio.stop(); stopTimer(); });
+$('audio-toggle').addEventListener('click', () => setAudioEnabled(!audio.isEnabled()));
+$('music-toggle').addEventListener('click', () => setMusicEnabled(!music.isEnabled()));
+const wakeMusic = event => { if (!event?.target?.closest?.('#music-toggle')) music.unlock(); };
+document.addEventListener?.('pointerdown', wakeMusic, true);
+document.addEventListener?.('keydown', wakeMusic, true);
+document.addEventListener?.('visibilitychange', () => { if (document.hidden) { audio.stop(); music.pause(); } else music.unlock(); });
+window.addEventListener('beforeunload', () => { if (progress && view === 'learning') saveProgress(); adventure.deactivate(); writingTables.deactivate(); mathSimulator.deactivate(); magicShop.deactivate(); audio.stop(); music.dispose(); stopTimer(); });
 fontSize.initialize();
 refreshLanguageControls(); notice(initial); showView('home'); renderHome();
 const requestedFeature = new URLSearchParams(window.location?.search || '').get('feature');
 if (requestedFeature === 'simulator') startMathSimulator();
 else if (requestedFeature === 'writing-tables') startWritingTables();
 else if (requestedFeature === 'magic-shop') startMagicShop();
-export function getAppState() { return JSON.parse(JSON.stringify({ language: getLanguage(), fontSizePercent: fontSize.getPercent(), view, selectedGrade, selectedPracticeTopic, motorRequired, smoothLines, pencilColor, guidedInk, progress, challenge, round: challenge, handwriting, workshop: handwriting, arcade: arcade.getState(), adventure: adventure.getState(), writingTables: writingTables.state(), mathSimulator: mathSimulator.getState(), magicShop: magicShop.getState() })); }
-export const appActions = { setLanguage: changeLanguage, setFontSize: fontSize.setPercent, startMagicShop, magicShop: magicShop.actions, startMathSimulator, mathSimulator: mathSimulator.actions, startWritingTables, startAdventure, adventure: adventure.actions, startArcade, arcade: arcade.actions, selectPracticeTopic, startGeometry, setSmoothLines, setPencilColor, setMotorRequired, confirmAnswerWriting, confirmPracticeWriting: () => confirmAnswerWriting('practice-' + challenge?.index), confirmGuidedWriting: () => confirmAnswerWriting('guided-' + (progress?.step === 'write' ? 'write' : fields[progress?.step])), startHandwriting, nextHandwritingActivity, skipHandwritingActivity, undoHandwriting, clearHandwriting, selectHandwritingLeft, connectHandwriting, moveHandwritingCoins, startNewMission, resumeMission, goHome, selectGrade, startPractice, startChallenge, requestPracticeHint, submitLearningAnswer, requestHint, moveLight, advanceLearning, markWritingAttempt, completeTrace, confirmWriting, skipWriting, submitChallengeAnswer, nextChallengeQuestion, openParentGate, renderParents };
+export function getAppState() { return JSON.parse(JSON.stringify({ language: getLanguage(), fontSizePercent: fontSize.getPercent(), audioEnabled: audio.isEnabled(), musicEnabled: music.isEnabled(), musicPlaying: music.isPlaying(), view, selectedGrade, selectedPracticeTopic, motorRequired, smoothLines, pencilColor, guidedInk, progress, challenge, round: challenge, handwriting, workshop: handwriting, arcade: arcade.getState(), adventure: adventure.getState(), writingTables: writingTables.state(), mathSimulator: mathSimulator.getState(), magicShop: magicShop.getState() })); }
+export const appActions = { setLanguage: changeLanguage, setFontSize: fontSize.setPercent, setAudioEnabled, setMusicEnabled, startMagicShop, magicShop: magicShop.actions, startMathSimulator, mathSimulator: mathSimulator.actions, startWritingTables, startAdventure, adventure: adventure.actions, startArcade, arcade: arcade.actions, selectPracticeTopic, startGeometry, setSmoothLines, setPencilColor, setMotorRequired, confirmAnswerWriting, confirmPracticeWriting: () => confirmAnswerWriting('practice-' + challenge?.index), confirmGuidedWriting: () => confirmAnswerWriting('guided-' + (progress?.step === 'write' ? 'write' : fields[progress?.step])), startHandwriting, nextHandwritingActivity, skipHandwritingActivity, undoHandwriting, clearHandwriting, selectHandwritingLeft, connectHandwriting, moveHandwritingCoins, startNewMission, resumeMission, goHome, selectGrade, startPractice, startChallenge, requestPracticeHint, submitLearningAnswer, requestHint, moveLight, advanceLearning, markWritingAttempt, completeTrace, confirmWriting, skipWriting, submitChallengeAnswer, nextChallengeQuestion, openParentGate, renderParents };
 
 // Readable state/actions for local browser smoke checks.
 window.__mathWizard = { getAppState, appActions, state: getAppState, actions: appActions };
