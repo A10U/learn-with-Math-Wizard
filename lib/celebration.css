@@ -1,0 +1,66 @@
+/* A transparent, non-interactive layer; the game and its feedback stay readable. */
+.mw-celebration {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  pointer-events: none;
+  overflow: hidden;
+  contain: strict;
+}
+.mw-firework-burst {
+  position: absolute;
+  left: var(--firework-left);
+  top: var(--firework-top);
+  width: 0;
+  height: 0;
+}
+.mw-firework-spark {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  color: var(--spark-color);
+  opacity: 0;
+  animation: mw-firework-scatter 1000ms cubic-bezier(.12,.65,.3,1) var(--spark-delay) both;
+}
+.mw-firework-spark::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: currentColor;
+  clip-path: polygon(50% 0, 62% 34%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 34%);
+  box-shadow: 0 0 6px currentColor;
+}
+.mw-firework-spark::after {
+  content: '';
+  position: absolute;
+  right: 4px;
+  top: 3px;
+  width: 27px;
+  height: 2px;
+  border-radius: 100%;
+  background: linear-gradient(to right, transparent, currentColor);
+  transform-origin: right center;
+  transform: rotate(var(--spark-angle));
+}
+@keyframes mw-firework-scatter {
+  0% { opacity: 0; transform: translate(0, 0) scale(.35); }
+  10% { opacity: 1; }
+  60% { opacity: 1; }
+  100% { opacity: 0; transform: translate(var(--spark-x), var(--spark-y)) scale(.65); }
+}
+.mw-celebration--reduced .mw-firework-spark {
+  animation: none;
+  opacity: 1;
+  width: 12px;
+  height: 12px;
+  transform: translate(var(--spark-x), var(--spark-y));
+}
+.mw-celebration--reduced .mw-firework-spark::after { display: none; }
+@media (prefers-reduced-motion: reduce) {
+  .mw-celebration .mw-firework-spark {
+    animation: none;
+    opacity: 1;
+    transform: translate(var(--spark-x), var(--spark-y));
+  }
+  .mw-celebration .mw-firework-spark::after { display: none; }
+}

@@ -3,6 +3,7 @@ import { parseNumber, newAttempt, recordAttempt, createLearningState, makeTenMov
 import { createStore } from './lib/storage.js';
 import { createAudio } from './lib/audio.js';
 import { createBackgroundMusic } from './lib/background-music.js';
+import { createCelebration } from './lib/celebration.js';
 import { GRADE_PROFILES, QUESTION_PROFILE_VERSION, WRITING_PROFILE_VERSION, createQuestionRound, localizeQuestion, translateTopic, getGradeProfileText } from './lib/questions.js';
 import { renderQuestionVisual } from './lib/question-visuals.js';
 import { createHandwritingRound, localizeHandwritingRound } from './lib/handwriting-content.js';
@@ -16,6 +17,7 @@ import { createWritingTableController } from './lib/writing-table-ui.js';
 import { createMathSimulatorController } from './lib/math-simulator-ui.js';
 import { createMagicShopController } from './lib/magic-shop-ui.js';
 import { createCrystalQuestController } from './lib/crystal-quest-ui.js';
+import { createFractionQuestController } from './lib/fraction-quest-ui.js';
 import { ADVENTURE_CAMPAIGNS, getCampaignInfo } from './lib/adventure.js';
 import { initializeLanguage, getLanguage, setLanguage, t, translateStatic } from './lib/i18n.js';
 import { trackGameStart, trackGameComplete } from './lib/analytics.js';
@@ -27,13 +29,21 @@ const fontSize = createFontSizeController({ document });
 const store = createStore();
 const audio = createAudio();
 const music = createBackgroundMusic();
-const gameAudio = { playEffect(name) { try { return audio.playEffect(name); } catch { return false; } } };
+const celebration = createCelebration();
+const gameAudio = {
+  celebrate(kind = 'success') { try { return celebration.burst({ kind }); } catch { return false; } },
+  playEffect(name, options = {}) {
+    if (name === 'success' || (name === 'complete' && options?.celebrate === true)) gameAudio.celebrate(name === 'complete' ? 'complete' : 'success');
+    try { return audio.playEffect(name); } catch { return false; }
+  }
+};
 const arcade = createArcadeController($('arcade-panel'), goHome, gameAudio);
 const adventure = createAdventureController($('adventure-panel'), goHome, gameAudio);
 const writingTables = createWritingTableController($('writing-tables-panel'), { onHome: goHome, getColor: () => pencilColor, isSmooth: () => smoothLines, ...gameAudio });
 const mathSimulator = createMathSimulatorController($('math-simulator-panel'), { onHome: goHome, ...gameAudio });
 const magicShop = createMagicShopController($('magic-shop-panel'), { onHome: goHome, ...gameAudio });
 const crystalQuest = createCrystalQuestController($('crystal-quest-panel'), { onHome: goHome, ...gameAudio });
+const fractionQuest = createFractionQuestController($('fraction-quest-panel'), { onHome: goHome, ...gameAudio });
 const initial = store.readProgress();
 let progress = initial.data;
 let view = 'home';
@@ -68,7 +78,7 @@ function notice(result) { if (result?.message) { lastStorageMessage = result.mes
 function saveProgress() { if (!progress) return; progress.updatedAt = Date.now(); const result = store.writeProgress(progress); notice(result); if (result.data) progress = result.data; }
 function stopTimer() { if (timer !== null) { clearInterval(timer); timer = null; } }
 function cancelChallenge() { stopTimer(); challenge = null; }
-function showView(next) { if (next !== 'arcade') arcade.deactivate(); if (next !== 'adventure') adventure.deactivate(); if (next !== 'writing-tables') writingTables.deactivate(); if (next !== 'math-simulator') mathSimulator.deactivate(); if (next !== 'magic-shop') magicShop.deactivate(); if (next !== 'crystal-quest') crystalQuest.deactivate(); if (cleanupDrawing) { cleanupDrawing(); cleanupDrawing = null; } audio.stop(); activeAnswerMotor = null; activeTraceMotor = null; if (next !== 'parents') parentUnlocked = false; view = next; ['home', 'learning', 'challenge', 'handwriting', 'arcade', 'adventure', 'writing-tables', 'math-simulator', 'magic-shop', 'crystal-quest', 'parents'].forEach(name => { $('view-' + name).hidden = name !== next; }); if (next !== 'handwriting') { handwriting = null; handwritingCanvas = null; } }
+function showView(next) { celebration.clear(); if (next !== 'arcade') arcade.deactivate(); if (next !== 'adventure') adventure.deactivate(); if (next !== 'writing-tables') writingTables.deactivate(); if (next !== 'math-simulator') mathSimulator.deactivate(); if (next !== 'magic-shop') magicShop.deactivate(); if (next !== 'crystal-quest') crystalQuest.deactivate(); if (next !== 'fraction-quest') fractionQuest.deactivate(); if (cleanupDrawing) { cleanupDrawing(); cleanupDrawing = null; } audio.stop(); activeAnswerMotor = null; activeTraceMotor = null; if (next !== 'parents') parentUnlocked = false; view = next; ['home', 'learning', 'challenge', 'handwriting', 'arcade', 'adventure', 'writing-tables', 'math-simulator', 'magic-shop', 'crystal-quest', 'fraction-quest', 'parents'].forEach(name => { $('view-' + name).hidden = name !== next; }); if (next !== 'handwriting') { handwriting = null; handwritingCanvas = null; } }
 function formatTime(ms) { const seconds = Math.floor(ms / 1000); return String(Math.floor(seconds / 60)).padStart(2, '0') + ':' + String(seconds % 60).padStart(2, '0'); }
 function audioControls(text) {
   const row = node('div', 'audio-row'); const status = node('span', 'audio-note', 'มีข้อความให้อ่านเสมอ เสียงภาษาไทยขึ้นกับเครื่องที่ใช้');
@@ -143,7 +153,7 @@ function changeLanguage(language) {
   const previousFocus = document.activeElement?.id;
   const confirmationHidden = $('new-mission-confirm').hidden;
   if (challenge?.active && !challenge.locked && $('challenge-answer')) challenge.draft = $('challenge-answer').value;
-  setLanguage(language); audio.stop(); writingTables.setLanguage(language); mathSimulator.setLanguage(language); magicShop.setLanguage(language); crystalQuest.setLanguage(language); refreshLanguageControls(); renderHome();
+  setLanguage(language); audio.stop(); writingTables.setLanguage(language); mathSimulator.setLanguage(language); magicShop.setLanguage(language); crystalQuest.setLanguage(language); fractionQuest.setLanguage(language); refreshLanguageControls(); renderHome();
   $('new-mission-confirm').hidden = confirmationHidden;
   if (challenge) {
     challenge.questions = challenge.questions.map(question => localizeQuestion(question, language));
@@ -223,6 +233,12 @@ function startCrystalQuest() {
   crystalQuest.enter({ grade: selectedGrade, language: getLanguage() });
   return true;
 }
+function startFractionQuest(chapter = null) {
+  if (progress && view === 'learning') saveProgress();
+  cancelChallenge(); showView('fraction-quest');
+  fractionQuest.enter({ grade: selectedGrade, language: getLanguage(), chapter: typeof chapter === 'string' ? chapter : null });
+  return true;
+}
 function startWritingTables(grade = selectedGrade) {
   const number = Number(grade); if (!GRADE_PROFILES.some(profile => profile.grade === number)) return false;
   if (progress && view === 'learning') saveProgress();
@@ -288,7 +304,7 @@ function requestHint(field) {
 }
 function moveLight(delta) { if (!progress || progress.step !== 'model') return null; progress.moved = makeTenMove(progress.moved, delta); saveProgress(); return progress.moved; }
 function markWritingAttempt() { if (!progress || !['trace', 'write'].includes(progress.step)) return false; if (motorRequired && !(progress.step === 'trace' ? activeTraceMotor?.isReady() : activeAnswerMotor?.scope === 'guided-write' && activeAnswerMotor.control?.isReady())) return false; progress.writing.attempted = true; return true; }
-function completeTrace() { if (!progress || view !== 'learning' || progress.step !== 'trace' || (motorRequired ? !activeTraceMotor?.isReady() : !progress.writing.attempted)) return false; progress.writing.attempted = true; progress.writing.traceDone = true; if (motorRequired) progress.writing.skipped = false; progress.step = 'write'; saveProgress(); renderLearning(); return true; }
+function completeTrace() { if (!progress || view !== 'learning' || progress.step !== 'trace' || (motorRequired ? !activeTraceMotor?.isReady() : !progress.writing.attempted)) return false; progress.writing.attempted = true; progress.writing.traceDone = true; if (motorRequired) progress.writing.skipped = false; progress.step = 'write'; saveProgress(); renderLearning(); gameAudio.celebrate(); return true; }
 function confirmWriting(raw) {
   if (!progress || view !== 'learning' || progress.step !== 'write' || (motorRequired && !inkCanSubmit('guided-write', guidedInk.write))) return false;
   const number = parseNumber(raw, { integerOnly: true });
@@ -310,7 +326,7 @@ function advanceLearning() {
   else if (current === 'explain' && progress.answers.explanation.correct) progress.step = 'transfer';
   else if (current === 'transfer' && progress.answers.transfer.correct) { progress.step = 'summary'; progress.completed = true; trackGameComplete('mission-make-ten'); }
   else return false;
-  saveProgress(); renderLearning(); gameAudio.playEffect(progress.completed ? 'complete' : 'tap'); return true;
+  saveProgress(); renderLearning(); gameAudio.playEffect(progress.completed ? 'complete' : current === 'model' ? 'success' : 'tap', { celebrate: progress.completed }); return true;
 }
 function learningHeader() {
   const index = steps.indexOf(progress.step); $('step-position').textContent = t('ช่วงที่ ' + (index + 1) + ' จาก 9 · โหมดฝึก ไม่มีเวลาบังคับ');
@@ -468,7 +484,7 @@ function finishRound() {
     const score = { deckId: deck.deckId, deckVersion: deck.deckVersion, grade: challenge.grade, total: 5, correct: challenge.correct, elapsedMs: challenge.elapsedMs, completedAt: Date.now() };
     const saved = store.writeScore(score); challenge.saved = true; $('score-storage-status').textContent = t(saved.message); renderRanking(saved.data);
   }
-  renderChallenge(); trackGameComplete(challenge.mode); gameAudio.playEffect('complete'); return true;
+  renderChallenge(); trackGameComplete(challenge.mode); gameAudio.playEffect('complete', { celebrate: roundStars() === 5 }); return true;
 }
 function roundStars() { return challenge ? challenge.attempts.filter(attempt => challenge.mode === 'practice' ? attempt.correct : attempt.firstCorrect === true).length : 0; }
 function renderAdventure() {
@@ -506,6 +522,7 @@ function submitChallengeAnswer(raw) {
   challenge.feedback = result.correct ? 'ถูกต้อง! ' + question.hint : challenge.mode === 'challenge' ? 'คำตอบคือ ' + question.answer + ' — ' + question.hint : (motorRequired ? 'ยังไม่ตรง ลองแก้รอยเขียนหรือเขียนใหม่ แล้วค่อยยืนยันอีกครั้ง' : 'ยังไม่ตรง ลองตรวจอีกครั้ง ขอคำใบ้ หรือไปข้อถัดไปได้');
   if (challenge.mode === 'challenge' && challenge.answered === 5) finishRound(); else renderChallenge();
   if (challenge.active) gameAudio.playEffect(result.correct ? 'success' : 'retry');
+  else if (result.correct && roundStars() !== 5) gameAudio.celebrate('success');
   return result;
 }
 function nextChallengeQuestion() {
@@ -663,7 +680,7 @@ function advanceHandwriting(skip = false) {
   if (index === handwriting.activities.length - 1) { handwriting.completed = true; trackGameComplete('workshop-' + handwriting.mode); } else handwriting.index++;
   handwriting.selectedLeft = null; handwriting.feedback = ''; renderHandwriting();
   if (!skip && audio.isEnabled() && audio.isAvailable()) audio.speak(t('เยี่ยมเลย ได้ฝึกมืออีกหนึ่งกิจกรรม'));
-  if (!skip) gameAudio.playEffect(handwriting.completed ? 'complete' : 'success');
+  if (!skip) gameAudio.playEffect(handwriting.completed ? 'complete' : 'success', { celebrate: handwriting.completed });
   return true;
 }
 function nextHandwritingActivity() { return advanceHandwriting(false); }
@@ -775,6 +792,7 @@ $('start-writing-tables').addEventListener('click', () => startWritingTables());
 $('start-math-simulator').addEventListener('click', () => startMathSimulator());
 $('start-magic-shop').addEventListener('click', () => startMagicShop());
 $('start-crystal-quest').addEventListener('click', startCrystalQuest);
+$('start-fraction-quest').addEventListener('click', () => startFractionQuest());
 document.querySelectorAll('[data-geometry-mode]').forEach(item => item.addEventListener('click', () => startGeometry(item.dataset.geometryMode)));
 $('smooth-toggle').addEventListener('click', () => setSmoothLines(!smoothLines));
 document.querySelectorAll('[data-workshop-mode]').forEach(item => item.addEventListener('click', () => startHandwriting(item.dataset.workshopMode)));
@@ -790,7 +808,7 @@ const wakeMusic = event => { if (!event?.target?.closest?.('#music-toggle')) mus
 document.addEventListener?.('pointerdown', wakeMusic, true);
 document.addEventListener?.('keydown', wakeMusic, true);
 document.addEventListener?.('visibilitychange', () => { if (document.hidden) { audio.stop(); music.pause(); } else music.unlock(); });
-window.addEventListener('beforeunload', () => { if (progress && view === 'learning') saveProgress(); adventure.deactivate(); writingTables.deactivate(); mathSimulator.deactivate(); magicShop.deactivate(); crystalQuest.deactivate(); audio.stop(); music.dispose(); stopTimer(); });
+window.addEventListener('beforeunload', () => { if (progress && view === 'learning') saveProgress(); adventure.deactivate(); writingTables.deactivate(); mathSimulator.deactivate(); magicShop.deactivate(); crystalQuest.deactivate(); fractionQuest.deactivate(); audio.stop(); music.dispose(); celebration.dispose(); stopTimer(); });
 fontSize.initialize();
 refreshLanguageControls(); notice(initial); showView('home'); renderHome();
 const requestedFeature = new URLSearchParams(window.location?.search || '').get('feature');
@@ -798,8 +816,9 @@ if (requestedFeature === 'simulator') startMathSimulator();
 else if (requestedFeature === 'writing-tables') startWritingTables();
 else if (requestedFeature === 'magic-shop') startMagicShop();
 else if (requestedFeature === 'crystal-quest') startCrystalQuest();
-export function getAppState() { return JSON.parse(JSON.stringify({ language: getLanguage(), fontSizePercent: fontSize.getPercent(), audioEnabled: audio.isEnabled(), musicEnabled: music.isEnabled(), musicPlaying: music.isPlaying(), view, selectedGrade, selectedPracticeTopic, motorRequired, smoothLines, pencilColor, guidedInk, progress, challenge, round: challenge, handwriting, workshop: handwriting, arcade: arcade.getState(), adventure: adventure.getState(), writingTables: writingTables.state(), mathSimulator: mathSimulator.getState(), magicShop: magicShop.getState(), crystalQuest: crystalQuest.getState() })); }
-export const appActions = { setLanguage: changeLanguage, setFontSize: fontSize.setPercent, setAudioEnabled, setMusicEnabled, startCrystalQuest, crystalQuest: crystalQuest.actions, startMagicShop, magicShop: magicShop.actions, startMathSimulator, mathSimulator: mathSimulator.actions, startWritingTables, startAdventure, adventure: adventure.actions, startArcade, arcade: arcade.actions, selectPracticeTopic, startGeometry, setSmoothLines, setPencilColor, setMotorRequired, confirmAnswerWriting, confirmPracticeWriting: () => confirmAnswerWriting('practice-' + challenge?.index), confirmGuidedWriting: () => confirmAnswerWriting('guided-' + (progress?.step === 'write' ? 'write' : fields[progress?.step])), startHandwriting, nextHandwritingActivity, skipHandwritingActivity, undoHandwriting, clearHandwriting, selectHandwritingLeft, connectHandwriting, moveHandwritingCoins, startNewMission, resumeMission, goHome, selectGrade, startPractice, startChallenge, requestPracticeHint, submitLearningAnswer, requestHint, moveLight, advanceLearning, markWritingAttempt, completeTrace, confirmWriting, skipWriting, submitChallengeAnswer, nextChallengeQuestion, openParentGate, renderParents };
+else if (requestedFeature === 'fraction-quest') startFractionQuest(new URLSearchParams(window.location?.search || '').get('chapter'));
+export function getAppState() { return JSON.parse(JSON.stringify({ language: getLanguage(), fontSizePercent: fontSize.getPercent(), audioEnabled: audio.isEnabled(), musicEnabled: music.isEnabled(), musicPlaying: music.isPlaying(), view, selectedGrade, selectedPracticeTopic, motorRequired, smoothLines, pencilColor, guidedInk, progress, challenge, round: challenge, handwriting, workshop: handwriting, arcade: arcade.getState(), adventure: adventure.getState(), writingTables: writingTables.state(), mathSimulator: mathSimulator.getState(), magicShop: magicShop.getState(), crystalQuest: crystalQuest.getState(), fractionQuest: fractionQuest.getState() })); }
+export const appActions = { setLanguage: changeLanguage, setFontSize: fontSize.setPercent, setAudioEnabled, setMusicEnabled, startFractionQuest, fractionQuest: fractionQuest.actions, startCrystalQuest, crystalQuest: crystalQuest.actions, startMagicShop, magicShop: magicShop.actions, startMathSimulator, mathSimulator: mathSimulator.actions, startWritingTables, startAdventure, adventure: adventure.actions, startArcade, arcade: arcade.actions, selectPracticeTopic, startGeometry, setSmoothLines, setPencilColor, setMotorRequired, confirmAnswerWriting, confirmPracticeWriting: () => confirmAnswerWriting('practice-' + challenge?.index), confirmGuidedWriting: () => confirmAnswerWriting('guided-' + (progress?.step === 'write' ? 'write' : fields[progress?.step])), startHandwriting, nextHandwritingActivity, skipHandwritingActivity, undoHandwriting, clearHandwriting, selectHandwritingLeft, connectHandwriting, moveHandwritingCoins, startNewMission, resumeMission, goHome, selectGrade, startPractice, startChallenge, requestPracticeHint, submitLearningAnswer, requestHint, moveLight, advanceLearning, markWritingAttempt, completeTrace, confirmWriting, skipWriting, submitChallengeAnswer, nextChallengeQuestion, openParentGate, renderParents };
 
 // Readable state/actions for local browser smoke checks.
 window.__mathWizard = { getAppState, appActions, state: getAppState, actions: appActions };
