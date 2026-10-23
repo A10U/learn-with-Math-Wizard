@@ -4,6 +4,8 @@
 # https://github.com/github/gitignore/blob/main/Global/VisualStudioCode.gitignore
 
 # Local project documents and original resources — never publish from this workspace
+/SDLC/
+/outputs/
 /core concept/
 /planing step/
 /doing step/
@@ -85,3 +87,10 @@ playwright-report/
 # Local verification and notes are not part of the public web app.
 /tests/
 /README.md
+
+# Local SDLC catalog tooling and SQLite transient files
+__pycache__/
+*.py[cod]
+*.sqlite-wal
+*.sqlite-shm
+*.sqlite-journal
