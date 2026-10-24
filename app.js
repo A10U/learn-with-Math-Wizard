@@ -68,7 +68,7 @@ let lastStorageMessage = '';
 const steps = ['story', 'model', 'equation', 'answer', 'trace', 'write', 'explain', 'transfer', 'summary'];
 const fields = { story: 'story', equation: 'equation', answer: 'base', explain: 'explanation', transfer: 'transfer' };
 const expected = { story: MISSION.storyExpected, equation: MISSION.equationExpected, base: MISSION.baseExpected, explanation: MISSION.explanationExpected, transfer: MISSION.transfer.expected };
-const titles = { story: ['เรื่องนี้ถามอะไรนะ?', 'ฟังหรืออ่านข้อความ แล้วเลือกสิ่งที่เราต้องหา'], model: ['เติมให้ครบสิบกัน', 'แตะกองแสงหรือใช้ปุ่มย้ายทีละดวงให้เต็มกรอบแรก'], equation: ['ภาพนี้เขียนเป็นโจทย์แบบไหน?', 'เลือกสมการที่ตรงกับเรื่องในสวน'], answer: ['ตอนนี้มีแสงทั้งหมดเท่าไร?', 'เขียนคำตอบของเรา แล้วลองตรวจด้วยภาพที่จัดไว้'], trace: ['บันทึกเลขลงสมุดเวท', 'เริ่มจากเขียนตามรอย 14 ไม่ต้องรีบและไม่ต้องเป๊ะ'], write: ['คราวนี้ลองเขียนเอง', 'เขียนเลข 14 แล้วบอกว่าเราตั้งใจเขียนจำนวนใด'], explain: ['ย้ายแล้ว แสงทั้งหมดเปลี่ยนไหม?', 'ดูภาพก่อนย้ายและหลังย้าย แล้วเลือกคำตอบ'], transfer: ['ลองเรื่องใหม่ด้วยตัวเอง', 'ยังไม่เปิดภาพช่วย ลองใช้วิธีที่เราถนัดก่อน'], summary: ['สวนกลับมาสว่างแล้ว!', 'เราได้ลองคิด จัดภาพ และอธิบายวิธีของตัวเอง'] };
+const titles = { story: ['เรื่องนี้ถามอะไรนะ?', 'ฟังหรืออ่านข้อความ แล้วเลือกสิ่งที่เราต้องหา'], model: ['เติมให้ครบสิบกัน', 'แตะดวงไฟหรือกดปุ่ม เพื่อย้ายไปเติมกรอบแรกให้ครบสิบ'], equation: ['ภาพนี้ตรงกับสมการข้อไหน?', 'เลือกสมการที่ตรงกับเรื่องในสวน'], answer: ['ตอนนี้มีแสงทั้งหมดเท่าไร?', 'เขียนคำตอบของเรา แล้วลองตรวจด้วยภาพที่จัดไว้'], trace: ['บันทึกเลขลงสมุดเวท', 'เริ่มจากเขียนตามรอย 14 ไม่ต้องรีบและไม่ต้องเป๊ะ'], write: ['คราวนี้ลองเขียนเอง', 'ลองเขียนเลข 14 แล้วใช้แป้นตัวเลขยืนยันเลขที่เขียน'], explain: ['ย้ายแล้ว แสงทั้งหมดเปลี่ยนไหม?', 'ดูภาพก่อนย้ายและหลังย้าย แล้วเลือกคำตอบ'], transfer: ['ลองเรื่องใหม่ด้วยตัวเอง', 'ลองคิดด้วยวิธีที่ถนัดก่อน แล้วค่อยขอคำใบ้ได้'], summary: ['สวนกลับมาสว่างแล้ว!', 'เราได้ลองคิด ย้ายดวงไฟ และอธิบายวิธีคิดของตัวเอง'] };
 
 function node(tag, className = '', text = '') { const element = document.createElement(tag); if (className) element.className = className; if (text) element.textContent = t(text); return element; }
 function button(text, className, action) { const element = node('button', className, text); element.type = 'button'; if (action) element.addEventListener('click', action); return element; }
@@ -99,7 +99,7 @@ function renderHome() {
   $('practice-scope-note').textContent = english
     ? `${profile.topics.length} topics · mixed rounds visit every topic within ${Math.ceil(profile.topics.length / 5)} rounds, or choose one topic to practice.`
     : `${profile.topics.length} หัวข้อ · เล่นโจทย์คละ ${Math.ceil(profile.topics.length / 5)} รอบจะได้พบทุกหัวข้อ หรือเลือกฝึกทีละเรื่องได้`;
-  $('curriculum-heading').textContent = english ? `Explore ${profile.topics.length} topics for Grade ${selectedGrade}` : `ดูเส้นทาง ${profile.topics.length} หัวข้อของ ป.${selectedGrade}`;
+  $('curriculum-heading').textContent = english ? `Explore ${profile.topics.length} topics for Grade ${selectedGrade}` : `ดูหัวข้อทั้งหมด ${profile.topics.length} เรื่องของ ป.${selectedGrade}`;
   const topicCards = $('curriculum-topics'); topicCards.replaceChildren();
   profile.topics.forEach((topic, index) => {
     const card = button(`${index + 1}. ${translateTopic(topic, getLanguage())}`, 'curriculum-topic', () => { selectPracticeTopic(topic); startPractice(); });
@@ -113,16 +113,16 @@ function renderHome() {
   $('geometry-count').textContent = t((selectedGrade <= 2 ? '6 รูป · สลับลากและวาด 12 กิจกรรม' : '8 รูป · สลับลากและวาด 16 กิจกรรม'));
   $('home-scene-title').textContent = t('ประตูเวทคณิต ป.' + selectedGrade);
   $('home-challenge-label').textContent = t('ท้าทาย' + (motorRequired ? 'เขียน' : 'พิมพ์') + ' 5 ข้อ · ป.' + selectedGrade);
-  $('motor-mode-note').textContent = t(motorRequired ? 'เขียน/ลากเส้นเป็นขั้นหลัก · แป้นตัวเลขใช้ยืนยันเลขที่เขียน' : 'ผู้ปกครองเปิดวิธีช่วย: ใช้แป้นตัวเลข ข้าม หรือแตะจับคู่แทนได้');
+  $('motor-mode-note').textContent = t(motorRequired ? 'เขียนหรือลากเส้นก่อน แล้วใช้แป้นตัวเลขยืนยันคำตอบ' : 'เปิดตัวช่วยแล้ว: พิมพ์คำตอบ ข้ามการเขียน หรือแตะจับคู่ได้');
   $('home-symbol').textContent = t(selectedGrade === 1 ? '+ −' : selectedGrade === 2 ? '× ÷' : selectedGrade >= 5 ? '% ½' : '½ ¼');
   const campaignCount = ADVENTURE_CAMPAIGNS.length, stageCount = ADVENTURE_CAMPAIGNS.reduce((sum, item) => sum + item.stageCount, 0);
   $('home-adventure-heading').textContent = english ? `${campaignCount} paths through the wizard world` : `${campaignCount} เส้นทางผจญภัยโลกเวทมนตร์`;
-  $('home-adventure-description').textContent = english ? 'Explore the tower, seal the Demon Lord and clear the Silent Moon. Then reach the Boundless Star Expanse: 25 stars, 40 stages each, with 2 extra thinking steps and no hints.' : 'สำรวจหอคอย ปราบจอมมาร และผ่านจันทราไร้เสียง แล้วเดินทางสู่หมู่มวลดาราเวิ้งว้าง 25 ดวง ดวงละ 40 ด่าน เพิ่มการคิด 2 ขั้น โดยไม่มีคำใบ้';
-  $('home-adventure-scope').textContent = english ? `Grade ${selectedGrade} · ${campaignCount} chapters · ${stageCount} stages · saved checkpoints · local TOP 10` : `ป.${selectedGrade} · ${campaignCount} บท · ${stageCount} ด่าน · บันทึกจุดพัก · TOP 10 บนเครื่อง`;
+  $('home-adventure-description').textContent = english ? 'Explore the tower, seal the Demon Lord and clear the Silent Moon. Then reach the Boundless Star Expanse: 25 stars, 40 stages each, with 2 extra thinking steps and no hints.' : 'สำรวจหอคอย ปราบจอมมาร และผ่านจันทราไร้เสียง ก่อนออกเดินทางสู่หมู่มวลดาราเวิ้งว้างที่มี 25 ดวง ดวงละ 40 ด่าน คิดต่ออีก 2 ขั้นและไม่มีคำใบ้';
+  $('home-adventure-scope').textContent = english ? `Grade ${selectedGrade} · ${campaignCount} chapters · ${stageCount} stages · saved checkpoints · local TOP 10` : `ป.${selectedGrade} · ${campaignCount} บท · ${stageCount} ด่าน · บันทึกด่านที่เล่นถึง · 10 อันดับบนเครื่องนี้`;
   const difficultyNotes = $('home-adventure-difficulty'); difficultyNotes.replaceChildren();
   const pathNotes = english
     ? [['Other paths', 'At your grade level', 'Adventure hints available'], ['Silent Moon', '1 extra thinking step', 'No hints'], ['Boundless Star Expanse', '2 extra thinking steps', 'No hints']]
-    : [['เส้นทางทั่วไป', 'ตามชั้นเรียน', 'ผจญภัยใช้คำใบ้ได้'], ['จันทราไร้เสียง', 'เพิ่มการคิด 1 ขั้น', 'ใช้คำใบ้ไม่ได้'], ['หมู่มวลดาราเวิ้งว้าง', 'เพิ่มการคิด 2 ขั้น', 'ใช้คำใบ้ไม่ได้']];
+    : [['เส้นทางทั่วไป', 'โจทย์ตามระดับชั้น', 'ขอคำใบ้ได้'], ['จันทราไร้เสียง', 'คิดต่ออีก 1 ขั้น', 'ใช้คำใบ้ไม่ได้'], ['หมู่มวลดาราเวิ้งว้าง', 'คิดต่ออีก 2 ขั้น', 'ใช้คำใบ้ไม่ได้']];
   pathNotes.forEach(([title, level, hint], index) => {
     const note = node('div', 'home-adventure-difficulty-line');
     note.append(node('strong', '', title), node('span', '', level), node('span', 'home-adventure-hint-policy' + (index ? ' sealed' : ''), hint));
@@ -271,7 +271,7 @@ function setMotorRequired(value) {
 function motorMessage(status) { return motorRequired && status?.available === false ? 'เครื่องนี้ยังเขียนไม่ได้ ให้ผู้ปกครองเปิดวิธีช่วยในหน้าสำหรับผู้ปกครอง' : status?.message || ''; }
 function mountAnswerSurface(panel, ink, { scope, canvasId, confirmId, trace = false, target = '', onGate = () => {}, onInk = () => {} } = {}) {
   const surface = node('section', 'answer-writing-surface'); surface.setAttribute('aria-label', t(trace ? 'เขียนตามรอย' : 'เขียนคำตอบก่อนยืนยัน'));
-  surface.append(node('h3', 'answer-writing-title', trace ? 'ลากตามรอยให้ครบ' : 'เขียนคำตอบของเราก่อน ✎'), node('p', 'fine', trace ? 'ค่อย ๆ ลากตามทุกตัว เริ่มจากจุดสีชมพู' : 'เขียนตัวเลข วาดรูป หรือเขียนวิธีคิดได้เลย แล้วค่อยยืนยันเลขที่ตั้งใจเขียน'));
+  surface.append(node('h3', 'answer-writing-title', trace ? 'ลากตามรอยให้ครบ' : 'เขียนคำตอบของเราก่อน ✎'), node('p', 'fine', trace ? 'ค่อย ๆ ลากตามทุกตัว เริ่มจากจุดสีชมพู' : 'เขียนคำตอบ วาดรูป หรือแสดงวิธีคิดได้เลย แล้วใช้แป้นตัวเลขยืนยันคำตอบ'));
   const canvas = node('canvas', 'writing-canvas answer-motor-canvas'); canvas.id = canvasId; canvas.tabIndex = 0; canvas.setAttribute('role', 'img'); canvas.setAttribute('aria-label', t(trace ? 'พื้นที่เขียนตามรอยเลข ' + target : 'พื้นที่เขียนคำตอบหรือวิธีคิด ไม่มีเฉลยให้ลอก'));
   const status = feedback(); const controls = node('div', 'writing-tools'); let control;
   const undo = button('ย้อนเส้น', '', () => control?.undo()); const clear = button('ล้างแล้วเขียนใหม่', '', () => control?.clear()); controls.append(undo, clear);
@@ -329,7 +329,7 @@ function advanceLearning() {
   saveProgress(); renderLearning(); gameAudio.playEffect(progress.completed ? 'complete' : current === 'model' ? 'success' : 'tap', { celebrate: progress.completed }); return true;
 }
 function learningHeader() {
-  const index = steps.indexOf(progress.step); $('step-position').textContent = t('ช่วงที่ ' + (index + 1) + ' จาก 9 · โหมดฝึก ไม่มีเวลาบังคับ');
+  const index = steps.indexOf(progress.step); $('step-position').textContent = t('ช่วงที่ ' + (index + 1) + ' จาก 9 · ค่อย ๆ ทำได้ ไม่จับเวลา');
   $('step-title').textContent = t(titles[progress.step][0]); $('step-subtitle').textContent = t(titles[progress.step][1]);
   const track = $('mission-track'); track.replaceChildren(); steps.forEach((step, i) => { const dot = node('span', 'mission-dot' + (i < index ? ' done' : i === index ? ' current' : '')); dot.setAttribute('aria-hidden', 'true'); track.append(dot); });
 }
@@ -374,7 +374,7 @@ function renderChoice(panel, field, choices, story, question) {
     if (selected === null) { status.textContent = t('เลือกหนึ่งคำตอบก่อนนะ'); return; }
     const result = submitLearningAnswer(field, selected); if (!result.valid) return;
     status.className = 'feedback ' + (result.correct ? 'success' : 'error');
-    status.textContent = t(result.correct ? (field === 'explanation' ? 'ใช่เลย! แสงทั้งหมดเท่าเดิม เราแค่ย้าย 2 ดวงไปอีกกอง' : 'ใช่เลย! ไปลองขั้นต่อไปกัน') : field === 'story' ? 'สิ่งที่เพิ่มมาคือข้อมูลที่รู้แล้ว ลองดูว่าเรื่องถามจำนวนอะไร' : field === 'equation' ? 'เรื่องนี้นำแสงมาเพิ่ม ลองเลือกสมการที่แสดงการรวม' : 'ลองนับทั้งสองกอง: ก่อนย้าย 14 ดวง หลังย้าย 14 ดวง มีแสงเพิ่มหรือหายไปไหม?');
+    status.textContent = t(result.correct ? (field === 'explanation' ? 'ใช่เลย! แสงทั้งหมดเท่าเดิม เราแค่ย้าย 2 ดวงไปอีกกอง' : 'ใช่เลย! ไปลองขั้นต่อไปกัน') : field === 'story' ? 'โจทย์บอกแล้วว่าเพิ่มมากี่ดวง ลองอ่านอีกครั้งว่าโจทย์ถามหาอะไร' : field === 'equation' ? 'เรื่องนี้นำแสงมาเพิ่ม ลองเลือกสมการที่แสดงการรวม' : 'ลองนับทั้งสองกอง: ก่อนย้าย 14 ดวง หลังย้าย 14 ดวง มีแสงเพิ่มหรือหายไปไหม?');
     update(); if (result.correct) next.focus();
   }
   if (progress.answers[field].correct) status.textContent = t('บันทึกคำตอบช่วงนี้แล้ว ไปต่อได้เลย');
@@ -388,7 +388,7 @@ function renderModel(panel) {
   const minus = button('− ย้ายคืน 1 ดวง', 'button outline compact', () => change(-1)); const plus = button('+ เติม 1 ดวง', 'button pale compact', () => change(1));
   const controls = node('div', 'model-controls'); controls.append(minus, plus); const message = node('p', 'model-message'); message.setAttribute('role', 'status'); const next = button('จัดครบแล้ว ไปต่อ →', 'button primary', advanceLearning);
   function grid(element, count) { element.replaceChildren(); for (let i = 0; i < 10; i++) { const cell = node('span', 'light-cell' + (i < count ? ' filled' : '')); cell.setAttribute('aria-hidden', 'true'); element.append(cell); } }
-  function update() { const m = progress.moved; grid(leftGrid, 8 + m); grid(rightGrid, 6 - m); leftTitle.textContent = t('กรอบแรก: ' + (8 + m) + ' ดวง'); rightTitle.textContent = t('กองที่เพิ่ม: ' + (6 - m) + ' ดวง'); left.setAttribute('aria-label', t('กรอบแรกมี ' + (8 + m) + ' ดวง แตะย้ายคืนหนึ่งดวง')); right.setAttribute('aria-label', t('กองที่เพิ่มเหลือ ' + (6 - m) + ' ดวง แตะเติมหนึ่งดวง')); minus.disabled = left.disabled = m === 0; plus.disabled = right.disabled = m === 2; next.disabled = m !== 2; message.textContent = t(m === 2 ? 'ได้ 10 กับอีก 4! แสงทั้งหมดไม่ได้เปลี่ยน' : 'กรอบแรกขาดอีก ' + (2 - m) + ' ดวงจะครบสิบ'); }
+  function update() { const m = progress.moved; grid(leftGrid, 8 + m); grid(rightGrid, 6 - m); leftTitle.textContent = t('กรอบแรก: ' + (8 + m) + ' ดวง'); rightTitle.textContent = t('กองที่เพิ่ม: ' + (6 - m) + ' ดวง'); left.setAttribute('aria-label', t('กรอบแรกมี ' + (8 + m) + ' ดวง แตะย้ายคืนหนึ่งดวง')); right.setAttribute('aria-label', t('กองที่เพิ่มเหลือ ' + (6 - m) + ' ดวง แตะเติมหนึ่งดวง')); minus.disabled = left.disabled = m === 0; plus.disabled = right.disabled = m === 2; next.disabled = m !== 2; message.textContent = t(m === 2 ? 'ได้ 10 กับอีก 4 ดวงแล้ว! จำนวนดวงไฟยังเท่าเดิม' : 'กรอบแรกขาดอีก ' + (2 - m) + ' ดวงจะครบสิบ'); }
   function change(delta) { moveLight(delta); update(); }
   panel.append(controls, message, audioControls('ย้ายแสงจากกองที่เพิ่มไปเติมกรอบแรกให้ครบสิบ แสงที่ย้ายไม่ได้หายไป'), next); update();
 }
@@ -410,9 +410,9 @@ function renderNumeric(panel, field, question, unit) {
   if (!progress.answers[field].correct) mountAnswerSurface(panel, ink, { scope: 'guided-' + field, canvasId: 'guided-answer-canvas', confirmId: 'guided-writing-confirm', onGate: updateGate });
   function updateHints() { const level = progress.hints[field]; hints.hidden = level === 0; hints.replaceChildren(); const list = node('ol'); MISSION.hints[field].slice(0, level).forEach(text => list.append(node('li', '', text))); hints.append(node('strong', 'tiny-label', 'คำใบ้ที่เปิดแล้ว'), list); hint.textContent = t(level < 3 ? 'ขอคำใบ้ (' + level + '/3)' : 'เปิดคำใบ้ครบแล้ว'); hint.disabled = level === 3 || progress.answers[field].correct; }
   function update() { const correct = progress.answers[field].correct; next.hidden = !correct; hint.hidden = correct; if (correct) input.value = String(progress.answers[field].answer); updateGate(inkCanSubmit('guided-' + field, ink)); updateHints(); }
-  form.addEventListener('submit', event => { event.preventDefault(); const result = submitLearningAnswer(field, input.value); if (!result.valid) { if (!progress.answers[field].correct) { status.textContent = t(result.reason === 'writing-required' ? 'เขียนคำตอบ แล้วกดยืนยันเลขที่เขียนก่อนนะ' : 'พิมพ์จำนวนเต็ม เช่น 12 หรือ ๑๒ ช่องว่างหรือข้อความยังไม่นับเป็นคำตอบ'); if (!result.reason) { input.setAttribute('aria-invalid', 'true'); input.focus(); } } return; } input.removeAttribute('aria-invalid'); if (motorRequired && !result.correct) input.value = ''; status.className = 'feedback ' + (result.correct ? 'success' : 'error'); status.textContent = t(result.correct ? (field === 'base' ? 'ถูกแล้ว 14 ดวง! เรามีสิบกับอีกสี่' : 'ใช่เลย 15 ลูก! เราใช้วิธีคิดกับเรื่องใหม่ได้') : motorRequired ? 'ยังไม่ตรง ลองแก้รอยเขียนหรือเขียนใหม่ แล้วค่อยยืนยันอีกครั้ง' : 'ยังไม่ตรง ลองตรวจปริมาณอีกครั้ง หรือเปิดคำใบ้ได้'); activeAnswerMotor?.refresh(); update(); if (result.correct) next.focus(); });
+  form.addEventListener('submit', event => { event.preventDefault(); const result = submitLearningAnswer(field, input.value); if (!result.valid) { if (!progress.answers[field].correct) { status.textContent = t(result.reason === 'writing-required' ? 'เขียนคำตอบ แล้วกดยืนยันเลขที่เขียนก่อนนะ' : 'ใส่คำตอบเป็นจำนวนเต็ม เช่น 12 หรือ ๑๒ ก่อนนะ'); if (!result.reason) { input.setAttribute('aria-invalid', 'true'); input.focus(); } } return; } input.removeAttribute('aria-invalid'); if (motorRequired && !result.correct) input.value = ''; status.className = 'feedback ' + (result.correct ? 'success' : 'error'); status.textContent = t(result.correct ? (field === 'base' ? 'ถูกแล้ว 14 ดวง! เรามีสิบกับอีกสี่' : 'ใช่เลย 15 ลูก! เราใช้วิธีคิดกับเรื่องใหม่ได้') : motorRequired ? 'คำตอบที่ยืนยันยังไม่ถูก ลองคิดอีกครั้ง แล้วเขียนและยืนยันคำตอบใหม่' : 'ยังไม่ถูกนะ ลองนับอีกครั้ง หรือขอคำใบ้ช่วยได้'); activeAnswerMotor?.refresh(); update(); if (result.correct) next.focus(); });
   if (progress.answers[field].correct) status.textContent = t('เก็บคำตอบของช่วงนี้แล้ว ไปต่อได้');
-  const actions = node('div', 'lesson-actions'); actions.append(hint, next); panel.append(form, status, actions, hints, node('p', 'fine', motorRequired ? 'แป้นตัวเลขใช้ยืนยันเลขที่เขียน การเขียนเป็นขั้นหลักของข้อนี้' : 'พิมพ์เลขไทยหรืออารบิกได้ ใช้คำใบ้ช่วยคิดแล้วลองอีกครั้งได้เลย')); update();
+  const actions = node('div', 'lesson-actions'); actions.append(hint, next); panel.append(form, status, actions, hints, node('p', 'fine', motorRequired ? 'เขียนคำตอบก่อน แล้วใช้แป้นตัวเลขยืนยันว่าเขียนเลขอะไร' : 'พิมพ์เลขไทยหรืออารบิกได้ ใช้คำใบ้ช่วยคิดแล้วลองอีกครั้งได้เลย')); update();
 }
 function renderWriting(panel) {
   const trace = progress.step === 'trace', ink = trace ? guidedInk.trace : guidedInk.write;
@@ -433,9 +433,9 @@ function renderWriting(panel) {
     form.addEventListener('submit', event => { event.preventDefault(); if (!confirmWriting(input.value)) { status.textContent = t(motorRequired && !inkCanSubmit('guided-write', ink) ? 'เขียนให้พร้อม แล้วกดยืนยันเลขที่เขียนก่อนนะ' : 'ระบุเลขที่ตั้งใจเขียนตั้งแต่ 0–99 เช่น 14'); input.setAttribute('aria-invalid', 'true'); } });
     panel.append(form, status); if (!motorRequired) panel.append(button('ข้ามการเขียนและไปต่อ', 'button outline', skipWriting)); gate(inkCanSubmit('guided-write', ink));
   }
-  panel.append(node('p', 'fine', motorRequired ? 'เขียน/ลากเส้นก่อนแล้วจึงไปต่อ รอยเขียนไม่บันทึกถาวร' : 'ใช้วิธีช่วยหรือข้ามได้ รอยเขียนไม่บันทึกถาวร'));
+  panel.append(node('p', 'fine', motorRequired ? 'เขียนหรือลากเส้นให้เสร็จแล้วค่อยไปต่อ รอยเขียนจะไม่เก็บไว้เมื่อจบรอบ' : 'ใช้ตัวช่วยหรือข้ามได้ รอยเขียนจะไม่เก็บไว้เมื่อจบรอบ'));
 }
-function attemptLabel(attempt) { return attempt.validCount === 0 ? 'ยังไม่ได้ประเมิน' : attempt.independent ? 'ถูกครั้งแรก ไม่ใช้คำใบ้' : attempt.correct ? 'ทำได้หลังลอง / มีตัวช่วย' : 'แนะนำฝึกต่อ'; }
+function attemptLabel(attempt) { return attempt.validCount === 0 ? 'ยังไม่ได้ประเมิน' : attempt.independent ? 'ถูกครั้งแรก ไม่ใช้คำใบ้' : attempt.correct ? 'ทำได้หลังลองใหม่หรือใช้ตัวช่วย' : 'แนะนำฝึกต่อ'; }
 function summaryList() { const list = node('ul', 'summary-list'); [['เข้าใจสิ่งที่โจทย์ถาม', 'story'], ['เลือกสมการ', 'equation'], ['คำนวณจากเรื่องในสวน', 'base'], ['อธิบายภาพ', 'explanation'], ['ลองเรื่องลูกแก้ว', 'transfer']].forEach(([label, key]) => { const li = node('li'); li.append(node('span', '', label), node('strong', '', attemptLabel(progress.answers[key]))); list.append(li); }); return list; }
 function renderSummary(panel) {
   const hero = node('div', 'summary-hero'); hero.append(node('span', 'summary-star', '✦'), node('h2', '', 'เราเติมแสงให้สวนแล้ว!'), node('p', '', 'จาก 8 + 6 เป็น 10 + 4 แล้วนำวิธีคิดไปลองกับ 9 + 6 ได้อีกเรื่อง')); panel.append(hero, summaryList());
@@ -490,8 +490,8 @@ function roundStars() { return challenge ? challenge.attempts.filter(attempt => 
 function renderAdventure() {
   if (!challenge) return;
   $('round-stars-count').textContent = t(roundStars() + ' / 5');
-  $('round-stars-label').textContent = t(challenge.mode === 'practice' ? 'ดาวที่คิดสำเร็จ' : 'ดาวคำตอบแรก');
-  $('round-reward-rule').textContent = t(challenge.mode === 'practice' ? 'คิดสำเร็จได้ดาว ลองใหม่หรือใช้คำใบ้ก็ได้ · เดินครบ 5 จุดรับตราจบรอบ' : 'ได้ดาวเมื่อตอบถูกครั้งแรก · เดินครบ 5 จุดรับตราจบรอบ');
+  $('round-stars-label').textContent = t(challenge.mode === 'practice' ? 'ดาวที่ได้' : 'ดาวจากคำตอบแรก');
+  $('round-reward-rule').textContent = t(challenge.mode === 'practice' ? 'ตอบถูกได้ดาว ลองใหม่หรือใช้คำใบ้ได้ · ผ่านครบ 5 จุดรับตราจบรอบ' : 'ได้ดาวเมื่อตอบถูกครั้งแรก · เดินครบ 5 จุดรับตราจบรอบ');
   $('round-encouragement').textContent = t(challenge.active ? challenge.encouragement : 'เดินทางครบห้าจุดแล้ว! เก่งมากที่ไม่หยุดลอง');
   const path = $('round-path'); path.replaceChildren();
   challenge.questions.forEach((question, index) => {
@@ -500,11 +500,11 @@ function renderAdventure() {
     if (challenge.active && index === challenge.index) item.setAttribute('aria-current', 'step');
     const symbol = node('span', 'path-symbol', correct ? '✦' : attempt.validCount ? '✓' : String(index + 1));
     const text = node('small', '', correct ? 'ได้ดาว' : attempt.validCount ? 'ลองแล้ว' : 'จุดที่ ' + (index + 1));
-    symbol.setAttribute('aria-hidden', 'true'); item.setAttribute('aria-label', t('ข้อ ' + (index + 1) + ': ' + (correct ? (challenge.mode === 'practice' ? 'คิดสำเร็จ ได้ดาว' : 'ตอบถูกครั้งแรก ได้ดาว') : attempt.validCount ? 'ได้ลองตอบแล้ว' : 'ยังไม่ได้ตอบ'))); item.append(symbol, text); path.append(item);
+    symbol.setAttribute('aria-hidden', 'true'); item.setAttribute('aria-label', t('ข้อ ' + (index + 1) + ': ' + (correct ? (challenge.mode === 'practice' ? 'ตอบถูก ได้ดาว' : 'ตอบถูกครั้งแรก ได้ดาว') : attempt.validCount ? 'ได้ลองตอบแล้ว' : 'ยังไม่ได้ตอบ'))); item.append(symbol, text); path.append(item);
   });
 }
 function completionBadge() {
-  const badge = node('div', 'completion-badge'); badge.append(node('span', 'completion-spark spark-a', '✦'), node('span', 'completion-spark spark-b', '✧'), node('span', 'completion-spark spark-c', '✦'), node('span', 'medal', '✓'), node('strong', '', 'นักผจญภัยครบ 5 จุด'), node('small', '', (challenge.mode === 'practice' ? 'ดาวที่คิดสำเร็จ ' : 'ดาวคำตอบแรก ') + roundStars() + '/5'));
+  const badge = node('div', 'completion-badge'); badge.append(node('span', 'completion-spark spark-a', '✦'), node('span', 'completion-spark spark-b', '✧'), node('span', 'completion-spark spark-c', '✦'), node('span', 'medal', '✓'), node('strong', '', 'นักผจญภัยครบ 5 จุด'), node('small', '', (challenge.mode === 'practice' ? 'ดาวที่ได้ ' : 'ดาวจากคำตอบแรก ') + roundStars() + '/5'));
   return badge;
 }
 function submitChallengeAnswer(raw) {
@@ -515,11 +515,11 @@ function submitChallengeAnswer(raw) {
   if (!result.valid) return result;
   consumeInk(challenge.answerInk[index]);
   challenge.attempts[index] = result.attempt; challenge.draft = motorRequired && !result.correct ? '' : String(raw); challenge.justEarned = challenge.mode === 'practice' ? result.correct && !previous.correct : previous.validCount === 0 && result.correct;
-  challenge.encouragement = result.correct ? (challenge.justEarned ? 'เยี่ยมเลย! ได้ดาวอีกดวง ✦' : 'เจอแล้ว! การลองใหม่ช่วยให้เราเข้าใจ') : challenge.mode === 'practice' ? 'ไม่เป็นไรนะ ลองคิดใหม่หรือให้พ่อมดช่วยใบ้ได้' : 'ขอบคุณที่ลอง! ดูวิธีคิด แล้วไปจุดถัดไปกัน';
+  challenge.encouragement = result.correct ? (challenge.justEarned ? 'เยี่ยมเลย! ได้ดาวอีกดวง ✦' : 'เจอแล้ว! การลองใหม่ช่วยให้เราเข้าใจ') : challenge.mode === 'practice' ? 'ลองคิดอีกครั้ง หรือขอคำใบ้จากพ่อมดได้' : 'ขอบคุณที่ลอง! ดูวิธีคิด แล้วไปจุดถัดไปกัน';
   if (result.correct && audio.isEnabled() && audio.isAvailable()) audio.speak(t(challenge.justEarned ? 'เยี่ยมเลย ได้ดาวอีกดวง' : 'ทำได้แล้ว เก่งมาก'));
   if (previous.validCount === 0) { challenge.answered++; if (result.correct) challenge.correct++; }
   challenge.locked = challenge.mode === 'challenge' || result.correct;
-  challenge.feedback = result.correct ? 'ถูกต้อง! ' + question.hint : challenge.mode === 'challenge' ? 'คำตอบคือ ' + question.answer + ' — ' + question.hint : (motorRequired ? 'ยังไม่ตรง ลองแก้รอยเขียนหรือเขียนใหม่ แล้วค่อยยืนยันอีกครั้ง' : 'ยังไม่ตรง ลองตรวจอีกครั้ง ขอคำใบ้ หรือไปข้อถัดไปได้');
+  challenge.feedback = result.correct ? 'ถูกต้อง! ' + question.hint : challenge.mode === 'challenge' ? 'คำตอบคือ ' + question.answer + ' — ' + question.hint : (motorRequired ? 'คำตอบที่ยืนยันยังไม่ถูก ลองคิดอีกครั้ง แล้วเขียนและยืนยันคำตอบใหม่' : 'ยังไม่ตรง ลองตรวจอีกครั้ง ขอคำใบ้ หรือไปข้อถัดไปได้');
   if (challenge.mode === 'challenge' && challenge.answered === 5) finishRound(); else renderChallenge();
   if (challenge.active) gameAudio.playEffect(result.correct ? 'success' : 'retry');
   else if (result.correct && roundStars() !== 5) gameAudio.celebrate('success');
@@ -576,7 +576,7 @@ function renderChallenge() {
   const practice = challenge.mode === 'practice';
   $('round-scope').textContent = t('ป.' + challenge.grade + ' · ' + (challenge.deck.topic ? translateTopic(challenge.deck.topic, getLanguage()) : getLanguage() === 'en' ? '5 mixed topics' : 'โจทย์คละ 5 หัวข้อ'));
   $('challenge-heading').textContent = t(practice ? (motorRequired ? 'เขียนก่อน แล้วค่อยยืนยันคำตอบ' : 'ลองคิดตามจังหวะของเรา') : motorRequired ? 'ท้าทายเขียนคำตอบ' : 'ท้าทายพิมพ์คำตอบ');
-  $('round-rules').textContent = t(practice ? (motorRequired ? 'เขียนคำตอบก่อน · ไม่จับเวลา · ขอคำใบ้และลองใหม่ได้' : 'โหมดช่วย · เขียนหรือใช้แป้นตัวเลขได้ · ไม่จับเวลา') : motorRequired ? 'เวลาเดินขึ้นรวมการเขียน · เขียนก่อนยืนยัน · รับคำตอบครั้งเดียวต่อข้อ' : 'โหมดช่วยพิมพ์คำตอบ · เวลาเดินขึ้น ไม่มีหมดเวลา · รับคำตอบครั้งเดียวต่อข้อ');
+  $('round-rules').textContent = t(practice ? (motorRequired ? 'เขียนคำตอบก่อน · ไม่จับเวลา · ขอคำใบ้และลองใหม่ได้' : 'เปิดตัวช่วย · เขียนหรือพิมพ์คำตอบได้ · ไม่จับเวลา') : motorRequired ? 'จับเวลารวมการเขียน · เขียนก่อนยืนยัน · แต่ละข้อตอบได้ครั้งเดียว' : 'พิมพ์คำตอบได้ · จับเวลาโดยไม่จำกัดเวลา · แต่ละข้อตอบได้ครั้งเดียว');
   $('round-time-stat').hidden = practice; $('round-ranking').hidden = practice;
   $('round-layout').className = 'challenge-layout' + (practice ? ' practice-layout' : '');
   $('round-accuracy-label').textContent = t('ถูกครั้งแรก'); updateChallengeStats(); renderAdventure();
@@ -585,7 +585,7 @@ function renderChallenge() {
     const heading = node('h2', 'challenge-question', practice ? 'ฝึกครบ 5 ข้อแล้ว!' : 'จบรอบท้าทาย!'); heading.tabIndex = -1;
     const independent = challenge.attempts.filter(attempt => attempt.independent).length; panel.append(completionBadge());
     panel.append(node('span', 'tiny-label', 'ป.' + challenge.grade + ' · ' + (practice ? 'สรุปการฝึก' : 'สรุปท้าทาย')), heading, node('p', '', 'ถูกครั้งแรก ' + challenge.correct + '/5 · ' + (challenge.correct * 20) + '%'));
-    if (practice) panel.append(node('p', '', 'ทำเองถูกครั้งแรกโดยไม่ใบ้ ' + independent + '/5'), node('p', 'fine', 'คำตอบครั้งแรกเก็บแยกจากการแก้ได้หลังลองใหม่ โหมดฝึกไม่บันทึกอันดับ'));
+    if (practice) panel.append(node('p', '', 'ตอบถูกครั้งแรกโดยไม่ใช้คำใบ้ ' + independent + '/5'), node('p', 'fine', 'ผลนี้แสดงทั้งข้อที่ตอบถูกตั้งแต่ครั้งแรกและข้อที่ทำได้หลังลองใหม่ โหมดฝึกไม่มีการจัดอันดับ'));
     else panel.append(node('p', '', 'เวลารวม ' + formatTime(challenge.elapsedMs)));
     panel.append(node('p', 'feedback', challenge.feedback));
     const actions = node('div', 'lesson-actions'); actions.append(button('สุ่มชุดใหม่ ป.' + challenge.grade, 'button primary', () => startRound(challenge.mode, challenge.grade, challenge.deck.topic || null)), button('กลับไปเลือกชั้น', 'button outline', goHome));
@@ -599,7 +599,7 @@ function renderChallenge() {
   const gate = unlocked => { form.hidden = motorRequired && !unlocked && !challenge.locked; input.disabled = submit.disabled = challenge.locked || (motorRequired && !unlocked); };
   if (practice || motorRequired) renderScratchpad(panel, gate); const status = feedback(); status.textContent = t(challenge.feedback); if (challenge.locked && challenge.attempts[challenge.index].correct) status.className = 'feedback success success-bloom';
   input.value = challenge.draft; gate(inkCanSubmit('practice-' + challenge.index, challenge.answerInk[challenge.index]));
-  form.addEventListener('submit', event => { event.preventDefault(); const result = submitChallengeAnswer(input.value); if (!result.valid && challenge?.active && !challenge.locked) { status.textContent = t(result.reason === 'writing-required' ? 'เขียนคำตอบ แล้วกดยืนยันเลขที่เขียนก่อนนะ' : question.integerOnly ? 'พิมพ์จำนวนเต็มก่อน ยังไม่นับเป็นคำตอบ' : 'พิมพ์จำนวนหรือเศษส่วน เช่น 3/4 ตัวส่วนต้องไม่เป็นศูนย์ ยังไม่นับเป็นคำตอบ'); if (!result.reason) { input.setAttribute('aria-invalid', 'true'); input.focus(); } } });
+  form.addEventListener('submit', event => { event.preventDefault(); const result = submitChallengeAnswer(input.value); if (!result.valid && challenge?.active && !challenge.locked) { status.textContent = t(result.reason === 'writing-required' ? 'เขียนคำตอบ แล้วกดยืนยันเลขที่เขียนก่อนนะ' : question.integerOnly ? 'ใส่คำตอบเป็นจำนวนเต็มก่อนนะ' : 'ใส่คำตอบเป็นตัวเลขหรือเศษส่วน เช่น 3/4 โดยตัวส่วนต้องไม่เป็น 0'); if (!result.reason) { input.setAttribute('aria-invalid', 'true'); input.focus(); } } });
   panel.append(form, status);
   if (!question.integerOnly) panel.append(node('p', 'fine', 'ตอบทศนิยมด้วยจุด เช่น 0.75 หรือเศษส่วนด้วย / เช่น 3/4 · จำนวนคละให้เปลี่ยนเป็นเศษเกิน เช่น 1 กับ 1/2 ตอบ 3/2'));
   if (practice) {
@@ -728,7 +728,7 @@ function renderCoins(panel, activity) {
   const cancel = event => { if (active !== event.pointerId) return; active = null; ghost.hidden = true; dragging = false; suppressClick = true; }; reserve.addEventListener('pointercancel', cancel); reserve.addEventListener('lostpointercapture', cancel);
   const controls = node('div', 'coin-controls'); const minus = button('− นำออก 1 เหรียญ', 'button outline compact', () => moveHandwritingCoins(-1)); const plus = button('+ เติม 1 เหรียญ', 'button pale compact', () => moveHandwritingCoins(1)); minus.id = 'coin-remove'; plus.id = 'coin-add'; minus.disabled = count <= activity.startCount; plus.disabled = count >= activity.targetCount; const reset = button('เริ่มเติมใหม่', 'button outline compact', clearHandwriting); reset.id = 'coin-reset'; controls.append(minus, plus, reset);
   const amount = node('p', 'coin-amount', count + ' / ' + activity.targetCount + ' เหรียญ · ' + (count * activity.coinValue) + ' / ' + activity.targetMoney + ' บาท'); amount.id = 'coin-count'; amount.setAttribute('role', 'status');
-  panel.append(node('p', 'coin-goal', 'เติมให้ครบ ' + activity.targetMoney + ' บาท'), tray, reserve, controls, amount, ghost, node('p', 'fine', 'แตะเหรียญที่เติมเพื่อนำออก เหรียญเดิมคงไว้'));
+  panel.append(node('p', 'coin-goal', 'เติมให้ครบ ' + activity.targetMoney + ' บาท'), tray, reserve, controls, amount, ghost, node('p', 'fine', 'แตะเหรียญที่เพิ่งเติมเพื่อนำออกได้ ส่วนเหรียญเดิมนำออกไม่ได้'));
   cleanupDrawing = () => { active = null; ghost.hidden = true; };
   const status = $('handwriting-status'); if (status) status.textContent = t(count === activity.targetCount ? 'ครบแล้ว! เราเติมเหรียญจนถึงเป้าหมาย' : 'ยังเติมได้อีก ' + (activity.targetCount - count) + ' เหรียญ');
   updateHandwritingStatus();
@@ -756,7 +756,7 @@ function renderHandwriting() {
     const canvas = node('canvas', 'handwriting-game-canvas'); canvas.id = 'handwriting-canvas'; canvas.setAttribute('role', 'img'); canvas.setAttribute('aria-label', t(activity.kind === 'trace' ? 'เขียนตามรอยเลข ' + activity.target : activity.kind === 'copy' ? 'พื้นที่เขียนเลขด้วยตัวเอง' : activity.kind === 'path' ? 'ลากเส้นตามทางจากจุดเริ่มถึงจุดจบ' : activity.kind === 'shape-trace' ? 'ลากตามรอย' + activity.shapeName + ' ให้ครบและกลับจุดเริ่ม' : activity.kind === 'shape-copy' ? 'พื้นที่ว่างสำหรับวาด' + activity.shapeName + ' จากตัวอย่าง' : activity.kind === 'creative' ? 'พื้นที่วาดภาพสร้างสรรค์ตามจินตนาการ' : 'ลากเส้นจับคู่ฝั่งซ้ายและฝั่งขวา')); canvas.tabIndex = 0;
     const tools = node('div', 'writing-tools'); const undo = button('ย้อนเส้น', '', undoHandwriting); undo.id = 'handwriting-undo'; const clear = button('ล้างแล้วลองใหม่', '', clearHandwriting); clear.id = 'handwriting-clear'; tools.append(undo, clear);
     panel.append(canvas, tools); if (activity.kind === 'connect' && !motorRequired) renderTapConnections(panel, activity);
-    panel.append(status, actions, node('p', 'fine', motorRequired ? 'ค่อย ๆ เขียนหรือลากเส้นให้พร้อมก่อนยืนยัน รอยเขียนอยู่เฉพาะรอบนี้' : 'โหมดช่วย: ข้ามหรือใช้ปุ่มทางเลือกได้ รอยเขียนอยู่เฉพาะรอบนี้'));
+    panel.append(status, actions, node('p', 'fine', motorRequired ? 'เขียนหรือลากเส้นให้เสร็จ แล้วค่อยกดยืนยัน รอยเขียนจะเก็บไว้เฉพาะรอบนี้' : 'เปิดตัวช่วยแล้ว: ข้ามหรือใช้ปุ่มแทนได้ รอยเขียนจะเก็บไว้เฉพาะรอบนี้'));
     const control = mountHandwritingCanvas(canvas, { activity, strokes: handwriting.strokes[handwriting.index], connections: handwriting.connections[handwriting.index], requireGesture: motorRequired, smooth: () => smoothLines, color: () => pencilColor, onChange: updateHandwritingStatus });
     handwritingCanvas = control; cleanupDrawing = () => { control.cleanup(); if (handwritingCanvas === control) handwritingCanvas = null; }; updateHandwritingStatus(control.status());
   }
@@ -770,16 +770,16 @@ function openParentGate() {
 function renderParents() {
   if (view !== 'parents') return; parentUnlocked = true;
   const panel = $('parent-panel'); panel.replaceChildren(); const columns = node('div', 'parent-columns'); const learning = node('section', 'parent-box'); learning.append(node('h2', '', 'ผลการฝึกบนเครื่องนี้'));
-  if (progress) { learning.append(node('p', '', (progress.completed ? 'จบช่วงหลักแล้ว' : 'ยังเล่นไม่จบ') + ' · G1-M03 เติมแสงให้สวน'), summaryList()); const w = progress.writing; learning.append(node('p', '', 'การเขียน: ' + (w.attempted ? 'ได้ลองเขียน' : 'ยังไม่ได้ลองเขียน') + (w.skipped ? ' · มีขั้นที่เลือกข้าม' : '') + (w.confirmed !== null ? ' · ยืนยันเองว่าตั้งใจเขียน ' + w.confirmed : '')), node('p', 'fine', 'ไม่มีการประเมินอ่านลายมืออัตโนมัติ การยืนยันเลขไม่ใช่คะแนนคณิตศาสตร์')); learning.append(node('p', '', 'ใบ้คำนวณในสวน: ' + progress.hints.base + '/3 · ใบ้เรื่องใหม่: ' + progress.hints.transfer + '/3')); }
+  if (progress) { learning.append(node('p', '', (progress.completed ? 'จบช่วงหลักแล้ว' : 'ยังเล่นไม่จบ') + ' · G1-M03 เติมแสงให้สวน'), summaryList()); const w = progress.writing; learning.append(node('p', '', 'การเขียน: ' + (w.attempted ? 'ได้ลองเขียน' : 'ยังไม่ได้ลองเขียน') + (w.skipped ? ' · มีขั้นที่เลือกข้าม' : '') + (w.confirmed !== null ? ' · ยืนยันเองว่าตั้งใจเขียน ' + w.confirmed : '')), node('p', 'fine', 'เกมไม่ได้อ่านลายมืออัตโนมัติ เด็กเป็นผู้ยืนยันเลขที่เขียน ส่วนผลคณิตศาสตร์ดูจากคำตอบที่ส่ง')); learning.append(node('p', '', 'ใบ้คำนวณในสวน: ' + progress.hints.base + '/3 · ใบ้เรื่องใหม่: ' + progress.hints.transfer + '/3')); }
   else learning.append(node('p', '', 'ยังไม่มีผลการฝึก เริ่มภารกิจแล้วกลับมาดูได้'));
-  learning.append(node('p', '', 'ลองช่วยต่อ: จัดของ 9 ชิ้นกับ 6 ชิ้น ชวนเด็กเติมให้ครบสิบ แล้วถามว่าส่วนที่เหลือมาจากไหน'), node('p', 'fine', 'ผลนี้แยกการทำเองจากการใช้ตัวช่วย การจบเรื่องเดียวไม่ใช่หลักฐาน mastery และไม่อ้างว่าพัฒนาการเกิดจากเกมแล้ว'));
+  learning.append(node('p', '', 'ลองช่วยต่อ: จัดของ 9 ชิ้นกับ 6 ชิ้น ชวนเด็กเติมให้ครบสิบ แล้วถามว่าส่วนที่เหลือมาจากไหน'), node('p', 'fine', 'ผลการฝึกแสดงว่าเด็กทำเองหรือใช้ตัวช่วย แต่การเล่นจบเพียงเรื่องเดียวยังบอกไม่ได้ว่าเข้าใจเรื่องนั้นคล่องแล้ว หรือพัฒนาขึ้นเพราะเกม'));
   const contacts = node('section', 'parent-box'); contacts.append(node('h2', '', 'Math wizard by DR.Suwan'), node('p', '', 'เห็นวิธีคิดของลูก แล้วต่อยอดให้ตรงจุด'), node('p', 'fine', 'ลิงก์ต่อไปนี้ออกจากเกมเมื่อกด ไม่มีการส่งคำตอบหรือข้อมูลเด็กไปช่องทางเหล่านี้อัตโนมัติ'));
   const list = node('ul', 'contact-list'); CONTACTS.forEach(contact => { if (!/^(https?:|tel:|mailto:)/.test(contact.url)) return; const li = node('li'); const a = node('a', '', contact.label + ' ↗'); a.href = contact.url; if (contact.url.startsWith('http')) { a.target = '_blank'; a.rel = 'noopener noreferrer'; } li.append(a); list.append(li); }); contacts.append(list); columns.append(learning, contacts); panel.append(columns);
   panel.append(node('p', 'fine', 'รุ่นนี้มีเกมวาดรูปเรขาคณิตแบบตามรอย ดูแล้ววาด และวาดสร้างสรรค์ การวาดเองเป็นการฝึกมือ ไม่ใช่การตรวจว่ารูปถูกต้องอัตโนมัติ และมีเกมฝึกมือชุดสั้น 14 และชุดใหญ่ 32 กิจกรรม เลือกฝึกเขียนตามรอยหรือเขียนเองอย่างละ 10 แบบ และเกมย่อยชนิดละ 4 แบบ โจทย์สุ่มฝึกและท้าทาย ป.1–6 เลือกฝึกเฉพาะหัวข้อได้ ป.5 เพิ่มเศษส่วน ทศนิยม ร้อยละ การวัดและอ่านข้อมูล ป.6 เพิ่ม ห.ร.ม./ค.ร.น. อัตราส่วน เรขาคณิตและแผนภูมิรูปวงกลม เป็นชุดฝึกที่คัดสรร ยังไม่ครอบคลุมทุกตัวชี้วัดของหลักสูตร และภารกิจทำสิบพร้อมภาพ/เขียนสำหรับ ป.1 หนึ่งเรื่อง ดาวฝึกมือให้จากการลงมือทำ ไม่อ่านลายมืออัตโนมัติหรือให้คะแนนความสวย รอยเขียนในเกมฝึกมือไม่เก็บถาวร ส่วนข้อมูลการเรียนและอันดับเก็บบนเบราว์เซอร์เมื่อรองรับ ไม่ซิงก์ข้ามเครื่อง และไม่ขอชื่อจริงเด็ก'));
   const modeBox = node('section', 'parent-box motor-settings'); modeBox.append(node('h2', '', 'วิธีตอบในโหมดฝึก'));
   const toggle = button('ให้เขียน/ลากเส้นก่อนตอบ: ' + (motorRequired ? 'เปิด' : 'ปิด — ใช้วิธีช่วย'), 'button ' + (motorRequired ? 'primary' : 'outline'), () => setMotorRequired(!motorRequired)); toggle.id = 'motor-required-toggle'; toggle.setAttribute('role', 'switch'); toggle.setAttribute('aria-checked', String(motorRequired));
-  modeBox.append(toggle, node('p', '', 'ค่าเริ่มต้นให้เด็กเขียนและลากเส้นก่อน แป้นตัวเลขใช้ยืนยันเลขที่เขียน โหมดท้าทายนับเวลารวมการเขียนและยืนยันเลข โดยแยกอันดับจากวิธีช่วยพิมพ์คำตอบ'));
-  modeBox.append(node('p', 'fine', 'หากอุปกรณ์หรือการควบคุมมือยังไม่พร้อม ผู้ปกครองปิดตัวเลือกนี้เพื่อใช้แป้นตัวเลข ข้ามการเขียน หรือแตะจับคู่แทนได้ ไม่มีการอ่านลายมืออัตโนมัติ'));
+  modeBox.append(toggle, node('p', '', 'ปกติเด็กจะเขียนหรือลากเส้นก่อน แล้วใช้แป้นตัวเลขยืนยันคำตอบ โหมดท้าทายจับเวลาตั้งแต่เริ่มเขียนจนยืนยัน และแยกอันดับระหว่างการเขียนกับการพิมพ์คำตอบ'));
+  modeBox.append(node('p', 'fine', 'ถ้าเขียนบนอุปกรณ์ไม่สะดวก ผู้ปกครองปิดตัวเลือกนี้ได้ เด็กจะใช้แป้นตัวเลข ข้ามการเขียน หรือแตะจับคู่แทนได้ เกมไม่ได้อ่านลายมืออัตโนมัติ'));
   panel.append(modeBox);
   const clear = node('div', 'inline-confirm'); clear.hidden = true; clear.append(node('p', '', 'ลบความคืบหน้าฝึกบนเครื่องนี้? คะแนนท้าทายจะไม่ถูกลบ'), button('ยืนยันลบความคืบหน้า', 'button outline compact', () => { const result = store.clearProgress(); progress = null; notice(result); renderParents(); }), button('เก็บข้อมูลเดิม', 'button pale compact', () => { clear.hidden = true; })); panel.append(button('ลบความคืบหน้าฝึกบนเครื่องนี้', 'button outline compact', () => { clear.hidden = false; }), clear);
 }
